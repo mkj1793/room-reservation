@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'HelsinkiGrotesk';
-  src: url('https://makasiini.hel.ninja/delivery/HelsinkiGrotesk/565d73a693abe0776c801607ac28f0bf.woff') format('woff');
+  src: url(../../static/media/565d73a693abe0776c801607ac28f0bf.8b0f7afa.woff) format('woff');
   font-display: swap;
   font-weight: 400;
   font-style: normal;
@@ -9,7 +9,7 @@
 
 @font-face {
   font-family: 'HelsinkiGrotesk';
-  src: url('https://makasiini.hel.ninja/delivery/HelsinkiGrotesk/5bb29e3b7b1d3ef30121229bbe67c3e1.woff') format('woff');
+  src: url(../../static/media/5bb29e3b7b1d3ef30121229bbe67c3e1.b17dfc93.woff) format('woff');
   font-display: swap;
   font-weight: 400;
   font-style: italic;
@@ -18,7 +18,7 @@
 
 @font-face {
   font-family: 'HelsinkiGrotesk';
-  src: url('https://makasiini.hel.ninja/delivery/HelsinkiGrotesk/7c46f288e8133b87e6b12b45dac71865.woff') format('woff');
+  src: url(../../static/media/7c46f288e8133b87e6b12b45dac71865.89764f6d.woff) format('woff');
   font-display: swap;
   font-weight: 500;
   font-style: normal;
@@ -27,7 +27,7 @@
 
 @font-face {
   font-family: 'HelsinkiGrotesk';
-  src: url('https://makasiini.hel.ninja/delivery/HelsinkiGrotesk/e62dc97e83a385e4d8cdc939cf1e4213.woff') format('woff');
+  src: url(../../static/media/e62dc97e83a385e4d8cdc939cf1e4213.8b0b8666.woff) format('woff');
   font-display: swap;
   font-weight: 500;
   font-style: italic;
@@ -36,7 +36,7 @@
 
 @font-face {
   font-family: 'HelsinkiGrotesk';
-  src: url('https://makasiini.hel.ninja/delivery/HelsinkiGrotesk/533af26cf28d7660f24c2884d3c27eac.woff') format('woff');
+  src: url(../../static/media/533af26cf28d7660f24c2884d3c27eac.6db76be2.woff) format('woff');
   font-display: swap;
   font-weight: 700;
   font-style: normal;
@@ -45,7 +45,7 @@
 
 @font-face {
   font-family: 'HelsinkiGrotesk';
-  src: url('https://makasiini.hel.ninja/delivery/HelsinkiGrotesk/20d494430c87e15e194932b729d48270.woff') format('woff');
+  src: url(../../static/media/20d494430c87e15e194932b729d48270.c718a1e2.woff) format('woff');
   font-display: swap;
   font-weight: 700;
   font-style: italic;
@@ -54,7 +54,7 @@
 
 @font-face {
   font-family: 'HelsinkiGrotesk';
-  src: url('https://makasiini.hel.ninja/delivery/HelsinkiGrotesk/a50a1bd245ce63abcc0d1da80ff790d2.woff') format('woff');
+  src: url(../../static/media/a50a1bd245ce63abcc0d1da80ff790d2.3e4217e6.woff) format('woff');
   font-display: swap;
   font-weight: 900;
   font-style: normal;
@@ -63,7 +63,7 @@
 
 @font-face {
   font-family: 'HelsinkiGrotesk';
-  src: url('https://makasiini.hel.ninja/delivery/HelsinkiGrotesk/62a1781d8b396fbb025b0552cf6304d2.woff') format('woff');
+  src: url(../../static/media/62a1781d8b396fbb025b0552cf6304d2.7dc9cef6.woff) format('woff');
   font-display: swap;
   font-weight: 900;
   font-style: italic;
@@ -1817,4 +1817,4 @@ body {
 .ToggleButton_label__Ci63z{color:var(--color-black-90);color:var(--label-color-default, var(--color-black-90));display:block;font-size:var(--fontsize-body-m);font-weight:500;margin-bottom:var(--spacing-3-xs)}.ToggleButton_toggleButtonContainer__2aLEx{--toggle-button-color: var(--color-bus);--toggle-button-hover-color: var(--color-bus-dark);--toggle-button-unselected-color: var(--color-black-90)}.ToggleButton_toggleButtonContainerInlineVariant__23jSX{align-items:center;display:flex;flex-wrap:wrap}.ToggleButton_toggleButtonContainerInlineVariant__23jSX .ToggleButton_label__Ci63z{margin-bottom:0}.ToggleButton_toggleButtonContainerInlineVariant__23jSX .ToggleButton_toggleButton__rOvo6{margin-left:auto}.ToggleButton_labelContainer__33lKx{align-items:flex-start;display:flex}.ToggleButton_tooltipButton__2LW0t{display:block;margin-left:var(--spacing-2-xs)}.ToggleButton_toggleButton__rOvo6{background:#fff;border:2px solid var(--toggle-button-unselected-color);border-radius:20px;cursor:pointer;display:inline-block;height:32px;width:56px;position:relative;top:0;left:0;right:0;bottom:0;transition:all 200ms}.ToggleButton_toggleButton__rOvo6:after{border-radius:25px;display:block;content:"";position:absolute;top:-7px;left:-7px;right:-7px;bottom:-7px}.ToggleButton_toggleButton__rOvo6:focus{outline:none}.ToggleButton_toggleButton__rOvo6:focus:after{box-sizing:content-box;border:3px solid var(--color-coat-of-arms)}.ToggleButton_toggleButton__rOvo6[disabled],.ToggleButton_toggleButton__rOvo6[disabled]:hover{border-color:var(--color-black-20);cursor:not-allowed}.ToggleButton_toggleButton__rOvo6[disabled] .ToggleButton_offIcon__3NMfC,.ToggleButton_toggleButton__rOvo6[disabled]:hover .ToggleButton_offIcon__3NMfC{color:var(--color-black-10)}.ToggleButton_toggleButton__rOvo6[aria-pressed=true]{background-color:var(--toggle-button-color);border-color:var(--toggle-button-color)}.ToggleButton_toggleButton__rOvo6[aria-pressed=true]:hover{background-color:var(--toggle-button-hover-color);border-color:var(--toggle-button-hover-color)}.ToggleButton_toggleButton__rOvo6[aria-pressed=true][disabled],.ToggleButton_toggleButton__rOvo6[aria-pressed=true][disabled]:hover{border-color:var(--color-black-10);background-color:var(--color-black-10)}.ToggleButton_toggleButton__rOvo6[aria-pressed=true] .ToggleButton_onIcon__3YJKA{margin-left:24px !important;opacity:1}.ToggleButton_toggleButton__rOvo6[aria-pressed=true] .ToggleButton_offIcon__3NMfC{margin-left:24px !important;opacity:0}.ToggleButton_toggleButtonIcon__3IC4K{cursor:pointer;top:-2px;left:-2px;transition:all 200ms;position:absolute}.ToggleButton_onIcon__3YJKA{color:#fff;opacity:0}.ToggleButton_offIcon__3NMfC{color:var(--toggle-button-unselected-color);opacity:1}
 .hds-example-form{margin:0 auto;max-width:792px}.hds-example-form__main-title{composes:heading-xl from "hds-core/lib/utils/helpers.css";margin:0 0 var(--spacing-m) 0}.hds-example-form__title{font-size:var(--fontsize-heading-l);font-weight:400;letter-spacing:-0.4px;line-height:var(--lineheight-s);margin:0 0 var(--spacing-m) 0}.hds-example-form__required-info{font-size:var(--fontsize-body-m);line-height:var(--lineheight-l);margin:0 0 var(--spacing-l) 0}.hds-example-form__error-summary{margin-bottom:var(--spacing-m)}.hds-example-form__section{margin-bottom:var(--spacing-xl)}.hds-example-form__section-title{composes:heading-s from "hds-core/lib/utils/helpers.css";margin:0 0 var(--spacing-m)}.hds-example-form__item{margin-bottom:var(--spacing-m)}.hds-example-form__terms{margin-top:var(--spacing-2-xs);margin-left:var(--spacing-l)}.hds-example-form__terms span{cursor:pointer;text-decoration:underline;color:var(--color-bus)}@media(min-width: 576px){.hds-example-form__grid-6-6{display:grid;grid-template-columns:1fr 1fr;grid-gap:var(--spacing-m);gap:var(--spacing-m)}.hds-example-form__grid-8-4{display:grid;grid-template-columns:2fr 1fr;grid-gap:var(--spacing-m);gap:var(--spacing-m)}.hds-example-form__grid-6-6:last-child,.hds-example-form__grid-8-4:last-child{margin-bottom:calc(-1 * var(--spacing-m))}}
 
-/*# sourceMappingURL=main.8d7027b4.chunk.css.map*/
+/*# sourceMappingURL=main.b04e6f48.chunk.css.map*/
