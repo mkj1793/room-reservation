@@ -208,6 +208,17 @@ const Layout = ({ children, pageContext }) => {
       />
       <div className="page text-body">
         <Navigation
+          theme={{
+            '--header-background-color': 'var(--color-engel)',
+            '--header-color': 'var(--color-black-90)',
+            '--header-divider-color': 'var(--color-black-20)',
+            '--header-focus-outline-color': 'var(--color-black)',
+            '--mobile-menu-background-color': 'var(--color-white)',
+            '--mobile-menu-color': 'var(--color-black-90)',
+            '--navigation-row-background-color': 'var(--color-white)',
+            '--navigation-row-color': 'var(--color-black-90)',
+            '--navigation-row-focus-outline-color': 'var(--color-coat-of-arms)',
+          }}
           id="page-header"
           className="pageHeader"
           title={<NavigationTitle />}
