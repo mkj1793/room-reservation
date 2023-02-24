@@ -1,0 +1,2 @@
+export { IconAngleUp } from './IconAngleUp'
+
