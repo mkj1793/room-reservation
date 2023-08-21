@@ -8,7 +8,6 @@
 </div>
 
 <br />
-
 <div align="center">
   <!-- Version -->
   <a href="https://github.com/City-of-Helsinki/helsinki-design-system/releases/latest">
