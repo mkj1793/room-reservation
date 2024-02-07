@@ -37,11 +37,11 @@ jobs:
         run: yarn build
         working-directory: ./packages/react
 
-      #- name: build hds-js package
-      #  run: yarn build:hds-js
-      #  working-directory: ./packages/react
+      - name: build hds-js package
+        run: yarn build:hds-js
+        working-directory: ./packages/react
 
       - name: release npm packages
-        run: yarn release
+        run: yarn release --dist-tag patch
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
