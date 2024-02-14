@@ -89,7 +89,7 @@ jobs:
           git config --global user.name "Github Actions"
           git add .
           git commit -m 'Updated icon library'
-          git git push --set-upstream origin icon-library-build-3.5.0
+          git push
 
       #- name: create pull request
       #  run: gh pr create -B development --title 'Icon library build' --body 'Created by Github action icon library'
