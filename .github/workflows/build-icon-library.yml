@@ -84,11 +84,12 @@ jobs:
 
       - name: Commit changed files
         run: |
+          git config --global push.default current
           git config --global user.email "hds@hel.fi"
           git config --global user.name "Github Actions"
           git add .
           git commit -m 'Updated icon library'
-          git push
+          git git push --set-upstream origin icon-library-build-3.5.0
 
       #- name: create pull request
       #  run: gh pr create -B development --title 'Icon library build' --body 'Created by Github action icon library'
