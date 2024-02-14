@@ -1,4 +1,4 @@
-# Build icon library, create zip file for release and create PR
+# Build icon library, create zip file for release and create a new branch
 name: icon library
 
 on:
@@ -76,6 +76,11 @@ jobs:
 
       - name: Remove icon library build directory
         run: rm -rf ./icon-library
+
+      - name: Create a new branch
+        run: |
+          PKG_VER=`node -pe "require('./packages/react/package.json').version"`
+          git checkout -b icon-library-build-${PKG_VER}
 
       - name: Commit changed files
         run: |
