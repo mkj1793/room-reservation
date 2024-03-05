@@ -6,20 +6,10 @@ import { Select } from './Select';
 import { IconLocation } from '../../icons';
 
 describe('<Select />', () => {
-  const onChangeTracker = jest.fn();
   const options = ['Option 1', 'Option 2', 'Option 3'];
   describe('spec', () => {
     const Wrapped = () => {
-      return (
-        <Select
-          options={options}
-          label="Label"
-          onChange={onChangeTracker}
-          placeholder="Choose one"
-          icon={<IconLocation />}
-          required
-        />
-      );
+      return <Select options={options} label="Label" placeholder="Choose one" icon={<IconLocation />} />;
     };
     it('renders the component', () => {
       const { asFragment } = render(<Wrapped />);
@@ -38,15 +28,7 @@ describe('<Select />', () => {
 
     const renderWithHelpers = () => {
       const result = render(
-        <Select
-          options={options}
-          label="Label"
-          onChange={onChangeTracker}
-          placeholder="Choose one"
-          icon={<IconLocation />}
-          required
-          id={selectId}
-        />,
+        <Select options={options} label="Label" placeholder="Choose one" icon={<IconLocation />} id={selectId} />,
       );
 
       const getElementById = (id: string) => {
@@ -66,7 +48,6 @@ describe('<Select />', () => {
       const isListOpen = (): boolean => {
         const toggler = getElementById(getMainButtonElementId()) as HTMLElement;
         const list = getElementById(getListElementId());
-        // fix !==
         return toggler.getAttribute('aria-expanded') !== 'true' && !!list;
       };
 
