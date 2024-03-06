@@ -11,19 +11,14 @@ const createListAndInputContainerProps = (
   props: DivElementProps,
   { getData, getMetaData, trigger }: SelectDataHandlers,
 ) => {
-  const { open, showFiltering, showSearch } = getData();
+  const { open } = getData();
   const { refs, elementIds } = getMetaData();
-  const hasInput = showFiltering || showSearch;
   const outsideClickTrigger = () => {
     trigger({ id: eventIds.generic, type: eventTypes.outSideClick });
   };
   return {
     ...props,
-    className: classNames(
-      styles.listAndInputContainer,
-      open && styles.listAndInputContainerVisible,
-      hasInput && styles.withSearchOrFilter,
-    ),
+    className: classNames(styles.listAndInputContainer, open && styles.listAndInputContainerVisible),
     ref: refs.listContainer,
     outsideClickTrigger,
     id: elementIds.selectionsAndListsContainer,

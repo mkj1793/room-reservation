@@ -1,6 +1,7 @@
 import { getMockCalls } from '../../../../utils/testHelpers';
 import { ChangeEvent } from '../../../dataProvider/DataContext';
-import { SelectData, SelectMetaData } from '../../types';
+import { EventId, EventType } from '../../events';
+import { Group, OptionInProps, SelectData, SelectMetaData } from '../../types';
 import { propsToGroups } from '../../utils';
 
 export type OptionalSelectData = Partial<SelectData>;
@@ -15,6 +16,7 @@ const mockData: { current: OptionalSelectData; default: OptionalSelectData } = {
     label: 'Label',
     placeholder: 'Placeholder',
     groups: propsToGroups({ options: ['Option 1'] }),
+    open: false,
   },
 };
 
@@ -43,6 +45,7 @@ const mockMetaData: { current: OptionalSelectMetaData; default: OptionalSelectMe
   default: {
     elementIds: {
       label: 'label-id',
+      list: 'list-id',
       button: 'button-id',
       arrowButton: 'arrow-id',
       clearButton: 'clear-id',
@@ -76,7 +79,17 @@ export function getCurrentMockMetaData() {
 const triggerTracker = jest.fn();
 
 export function getTriggeredEvents() {
-  return getMockCalls(triggerTracker);
+  return getMockCalls(triggerTracker).map((args) => args[0]) as ChangeEvent<EventId, EventType>[];
+}
+
+export function restTriggerTracking() {
+  triggerTracker.mockReset();
+}
+
+export function resetAllMocks() {
+  restTriggerTracking();
+  resetMockMetaData();
+  resetMockData();
 }
 
 export function getDataUpdates() {
@@ -85,6 +98,28 @@ export function getDataUpdates() {
 
 export function getMetaDataUpdates() {
   return getMockCalls(mockMetaDataUpdateTracker);
+}
+
+export function createDataWithSelectedOptions({
+  totalOptionsCount = 20,
+  selectedOptionsCount = 1,
+  label,
+}: {
+  totalOptionsCount?: number;
+  selectedOptionsCount?: number;
+  label?: string;
+} = {}) {
+  const options: OptionInProps[] = [];
+  let selectCount = selectedOptionsCount;
+  for (let y = 0; y < totalOptionsCount; y += 1) {
+    options.push({ label: `Option ${y}`, selected: selectCount > 0 });
+
+    selectCount -= 1;
+  }
+  if (label) {
+    return { groups: propsToGroups({ groups: [{ options, label }] }) as Group[] };
+  }
+  return { groups: propsToGroups({ options }) as Group[] };
 }
 
 // name must start with "mock"

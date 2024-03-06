@@ -107,6 +107,7 @@ export function ButtonWithSelectedOptions() {
       </div>
       {options.length > 1 && (
         <span className={styles.count} key="count">
+          {/* This className deliberately a string so js finds the span with span.count */}
           <span className="count" key="number">
             +1
           </span>
