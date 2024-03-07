@@ -55,17 +55,6 @@ export function getOptionGroupIndex(groups: SelectData['groups'], option: Option
   });
 }
 
-export function getSelectedOptionsPerc(group: Group, pendingSelectionCount = 0): number {
-  const optionCountWithoutGroupLabel = group.options.length - 1;
-  if (!optionCountWithoutGroupLabel) {
-    return 0;
-  }
-  return (
-    (group.options.filter((option) => !option.isGroupLabel && option.selected).length + pendingSelectionCount) /
-    optionCountWithoutGroupLabel
-  );
-}
-
 export function iterateAndCopyGroup(groups: Group[], iterator: OptionIterator): Group[] {
   return groups.map((group, groupIndex) => {
     return {
@@ -81,12 +70,11 @@ export function updateSelectedOptionInGroups(
   updatedOption: Option,
 ): SelectData['groups'] {
   const groupIndex = getOptionGroupIndex(groups, updatedOption);
-
   return groups.map((group, index) => {
     return {
       options: group.options.map((option) => {
         if (option.isGroupLabel) {
-          return option;
+          return { ...option };
         }
         if (index === groupIndex && option.value === updatedOption.value) {
           return {
@@ -100,25 +88,6 @@ export function updateSelectedOptionInGroups(
         };
       }),
     };
-  });
-}
-
-export function updateSelectedGroupOptions(groups: SelectData['groups'], updatedOption: Option): SelectData['groups'] {
-  const targetGroupIndex = getOptionGroupIndex(groups, updatedOption);
-  if (targetGroupIndex < 0) {
-    return groups;
-  }
-
-  return iterateAndCopyGroup(groups, (option, group, optionIndex, groupIndex) => {
-    if (groupIndex !== targetGroupIndex) {
-      return { ...option };
-    }
-    return option.visible && !option.disabled
-      ? {
-          ...option,
-          selected: updatedOption.selected,
-        }
-      : { ...option };
   });
 }
 
@@ -211,31 +180,6 @@ export function propsToGroups(props: Pick<SelectProps, 'groups' | 'options'>): S
   ];
 }
 
-export function defaultFilter(option: Option, filterStr: string) {
-  return option.label.toLowerCase().indexOf(filterStr.toLowerCase()) > -1;
-}
-
-export function filterOptions(groups: SelectData['groups'], filterStr: string) {
-  groups.forEach((group) => {
-    // do not count the label
-    let visibleOptions = group.options.length - 1;
-    group.options.forEach((option) => {
-      if (option.isGroupLabel) {
-        return;
-      }
-      // eslint-disable-next-line no-param-reassign
-      option.visible = !filterStr || defaultFilter(option, filterStr);
-      if (!option.visible) {
-        visibleOptions -= 1;
-      }
-    });
-    const groupLabel = group.options[0];
-    groupLabel.visible = !!groupLabel.label && visibleOptions > 0;
-    // check if group label should be visible....
-  });
-  return groups;
-}
-
 export function childrenToGroups(children: SelectProps<ReactElement>['children']): SelectData['groups'] | undefined {
   if (!children || typeof children !== 'object') {
     return undefined;
@@ -269,28 +213,4 @@ export function childrenToGroups(children: SelectProps<ReactElement>['children']
     });
   }
   return [{ options: [createGroupLabel(''), ...childArray.map(optionElementToOption)] }];
-}
-
-export function mergeSearchResultsToCurrent(
-  props: Pick<SelectProps, 'groups' | 'options'>,
-  currentGroups: SelectData['groups'],
-): SelectData['groups'] {
-  const newData = propsToGroups(props) || [];
-  const newOptions = getAllOptions(newData);
-  const currentOptionsWithoutMatches = getSelectedOptions(currentGroups).filter((option) => {
-    const sameInNewOptionsIndex = newOptions.findIndex((newOption) => {
-      return newOption.value === option.value;
-    });
-    if (sameInNewOptionsIndex > -1) {
-      newOptions[sameInNewOptionsIndex].selected = true;
-      return false;
-    }
-    return true;
-  });
-
-  const currentHiddenOptionsInAGroup = currentOptionsWithoutMatches.length
-    ? [{ options: currentOptionsWithoutMatches.map((opt) => ({ ...opt, visible: false })) } as Group]
-    : [];
-
-  return [...currentHiddenOptionsInAGroup, ...newData];
 }

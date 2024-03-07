@@ -48,7 +48,7 @@ describe('<Select />', () => {
       const isListOpen = (): boolean => {
         const toggler = getElementById(getMainButtonElementId()) as HTMLElement;
         const list = getElementById(getListElementId());
-        return toggler.getAttribute('aria-expanded') !== 'true' && !!list;
+        return String(toggler.getAttribute('aria-expanded')) === 'true' && !!list;
       };
 
       const openList = async () => {

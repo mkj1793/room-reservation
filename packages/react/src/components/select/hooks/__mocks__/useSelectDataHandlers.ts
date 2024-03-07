@@ -135,8 +135,8 @@ export const mockUseSelectDataHandlersContents = {
     return mockMetaData.current;
   },
   updateMetaData: (newMetaData: Partial<SelectMetaData>) => {
-    mockDataUpdateTracker(newMetaData);
     mockMetaDataUpdateTracker(newMetaData);
+    updateMockMetaData(newMetaData as OptionalSelectMetaData);
   },
   trigger: (event: ChangeEvent) => {
     triggerTracker(event);

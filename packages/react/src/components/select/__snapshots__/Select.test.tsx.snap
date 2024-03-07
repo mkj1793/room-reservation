@@ -3,9 +3,8 @@
 exports[`<Select /> spec renders the component 1`] = `
 <DocumentFragment>
   <div
-    class="wrapper"
+    class="wrapper root"
     id="hds-select-1"
-    tabindex="-1"
   >
     <label
       class="label "
@@ -13,19 +12,17 @@ exports[`<Select /> spec renders the component 1`] = `
       id="hds-select-1-label"
     >
       Label
-      <span
-        class="indicator"
-      >
-        *
-      </span>
     </label>
     <div
-      class="root container"
+      class="selectAndListContainer"
     >
       <div
         class="selectedOptionsContainer"
       >
         <button
+          aria-controls="hds-select-1-sl-container"
+          aria-expanded="false"
+          aria-haspopup="listbox"
           class="button selectedOptions placeholder spaceForOneDigit"
           id="hds-select-1-main-button"
           type="button"
@@ -82,6 +79,7 @@ exports[`<Select /> spec renders the component 1`] = `
       </div>
       <div
         class="listAndInputContainer"
+        id="hds-select-1-sl-container"
       />
     </div>
   </div>

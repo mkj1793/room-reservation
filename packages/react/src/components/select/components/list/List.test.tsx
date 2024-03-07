@@ -4,10 +4,9 @@ import { fireEvent, render } from '@testing-library/react';
 import { List } from './List';
 // eslint-disable-next-line jest/no-mocks-import
 import {
-  resetMockData,
+  resetAllMocks,
   mockUseSelectDataHandlersContents,
   getCurrentMockMetaData,
-  resetMockMetaData,
   getCurrentMockData,
   OptionalSelectData,
   OptionalSelectMetaData,
@@ -26,8 +25,7 @@ jest.mock('../../hooks/useSelectDataHandlers', () => ({
 
 describe('<List />', () => {
   beforeEach(() => {
-    resetMockData();
-    resetMockMetaData();
+    resetAllMocks();
   });
   const getList = ({ getElementById, metaData }: Partial<ReturnType<typeof initTests>>) => {
     if (!getElementById || !metaData) {
@@ -139,6 +137,14 @@ describe('<List />', () => {
         expect(isOptionClickEvent(triggeredEvent.id, triggeredEvent.type)).toBeTruthy();
         expect(triggeredEvent.payload?.value).toMatchObject(options[index]);
       });
+    });
+    it('Clicking a group label does not trigger anything.', () => {
+      const initData = createDataWithSelectedOptions({ label: 'Group label' });
+      const { getElementById, metaData } = initTests(initData);
+      const groupLabelEl = getOptionElements({ getElementById, metaData })[0] as HTMLLIElement;
+      expect(isOptionElement(groupLabelEl)).toBe(false);
+      fireEvent.click(groupLabelEl);
+      expect(getTriggeredEvents()).toHaveLength(0);
     });
   });
 });

@@ -4,7 +4,7 @@ import React, { ReactElement, useMemo, createRef } from 'react';
 import { SelectProps, SelectMetaData, SelectData } from './types';
 import { Container } from './components/Container';
 import { Label } from './components/Label';
-import { changeChandler } from './dataUpdater';
+import { dataUpdater } from './dataUpdater';
 import { propsToGroups, childrenToGroups } from './utils';
 import { DataProvider } from '../dataProvider/DataProvider';
 import { SelectedOptionsContainer } from './components/selectedOptions/SelectedOptionsContainer';
@@ -60,7 +60,7 @@ export function Select({
   // unmount => cancel asyncs
 
   return (
-    <DataProvider<SelectData, SelectMetaData> initialData={initialData} metaData={metaData} onChange={changeChandler}>
+    <DataProvider<SelectData, SelectMetaData> initialData={initialData} metaData={metaData} onChange={dataUpdater}>
       <Container>
         <Label />
         <SelectionsAndListsContainer>
