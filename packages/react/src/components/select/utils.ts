@@ -113,18 +113,6 @@ export function getAllOptions(groups: SelectData['groups'], filterOutGroupLabels
   return options;
 }
 
-export function countVisibleOptions(groups: SelectData['groups']): number {
-  let count = 0;
-  groups.forEach((group) => {
-    group.options.forEach((option) => {
-      if (!option.isGroupLabel && option.visible) {
-        count += 1;
-      }
-    });
-  });
-  return count;
-}
-
 export function getVisibleGroupLabels(groups: SelectData['groups']): Option[] {
   return groups.map((group) => group.options[0]).filter((option) => option && option.label && option.visible);
 }
@@ -151,7 +139,7 @@ export function validateOption(option: OptionInProps | string): Option {
   };
 }
 
-function createGroupLabel(label: string) {
+export function createGroupLabel(label: string) {
   return { ...validateOption(label), isGroupLabel: true, visible: !!label, disabled: false };
 }
 
@@ -163,10 +151,6 @@ export function propsToGroups(props: Pick<SelectProps, 'groups' | 'options'>): S
     return props.groups.map((group) => {
       const labelOption: Option = createGroupLabel(group.label);
       const groupOptions = group.options.map(validateOption);
-      const allSelected = groupOptions.findIndex((option) => !option.selected) === -1;
-      if (allSelected) {
-        labelOption.selected = true;
-      }
       return {
         options: [labelOption, ...groupOptions],
       };
@@ -204,10 +188,6 @@ export function childrenToGroups(children: SelectProps<ReactElement>['children']
       const optionElements = child.props.children;
       const options = optionElements ? getChildrenAsArray(optionElements).map(optionElementToOption) : [];
       const label = createGroupLabel(String(child.props.label));
-      const allSelected = options.findIndex((option) => !option.selected) === -1;
-      if (allSelected) {
-        label.selected = true;
-      }
       options.unshift(label);
       return { options };
     });

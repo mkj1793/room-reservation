@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { PropsWithChildren, ReactElement } from 'react';
+import { render } from '@testing-library/react';
 
 // eslint-disable-next-line jest/no-mocks-import
 import {
@@ -8,17 +9,22 @@ import {
   resetAllMocks,
 } from './hooks/__mocks__/useSelectDataHandlers';
 import {
+  childrenToGroups,
   clearAllSelectedOptions,
+  createGroupLabel,
   createInputOnChangeListener,
   createOnClickListener,
   getAllOptions,
   getOptionGroupIndex,
   getSelectedOptions,
+  getVisibleGroupLabels,
   iterateAndCopyGroup,
   OptionIterator,
+  propsToGroups,
   updateSelectedOptionInGroups,
+  validateOption,
 } from './utils';
-import { Option, SelectDataHandlers } from './types';
+import { Group, Option, SelectDataHandlers } from './types';
 import { ChangeEvent, ChangeEventPayload } from '../dataProvider/DataContext';
 import { eventTypes } from './events';
 
@@ -241,6 +247,212 @@ describe('utils', () => {
       expect(getSelectedOptions(newGroups)).toHaveLength(0);
       expect(getSelectedOptions(groups)).toHaveLength(60);
       expect(JSON.stringify(groups)).toBe(stringBackup);
+    });
+  });
+  describe('getAllOptions', () => {
+    const iterateAllOptions = (filterOutGroupLabels = true) => {
+      const { groups } = createMultipleGroups();
+      let counter = 0;
+      const allOptions = getAllOptions(groups, filterOutGroupLabels);
+      groups.forEach((group) => {
+        group.options.forEach((option) => {
+          if (!option.isGroupLabel || option.isGroupLabel === !filterOutGroupLabels) {
+            // eslint-disable-next-line jest/no-conditional-expect
+            expect(option).toBe(allOptions[counter]);
+            counter += 1;
+          }
+        });
+      });
+      return counter;
+    };
+    it('Collects all options from groups. By default, group labels are ignored.', () => {
+      const options = iterateAllOptions();
+      expect(options).toBe(60);
+    });
+    it('Collects also group labels when filterOutGroupLabels is set to false.', () => {
+      const options = iterateAllOptions(false);
+      expect(options).toBe(60 + 3);
+    });
+  });
+  describe('getSelectedOptions', () => {
+    it('Collects all selected options from groups.', () => {
+      expect(getSelectedOptions([])).toHaveLength(0);
+      expect(getSelectedOptions(createDataWithSelectedOptions({ selectedOptionsCount: 0 }).groups)).toHaveLength(0);
+      expect(getSelectedOptions(createDataWithSelectedOptions({ selectedOptionsCount: 10 }).groups)).toHaveLength(10);
+      const groupWith10SelectedOptions = createDataWithSelectedOptions({ selectedOptionsCount: 10 }).groups[0];
+      expect(
+        getSelectedOptions([groupWith10SelectedOptions, groupWith10SelectedOptions, groupWith10SelectedOptions]),
+      ).toHaveLength(30);
+    });
+  });
+  describe('getVisibleGroupLabels', () => {
+    it('Returns list of group labels that are visible and label is not empty', () => {
+      const visibleLabel = { options: [{ isGroupLabel: true, label: 'label', visible: true }] } as Group;
+      const emptyLabel = { options: [{ isGroupLabel: true, label: '', visible: true }] } as Group;
+      const hiddenLabel = { options: [{ isGroupLabel: true, label: 'Label', visible: false }] } as Group;
+      expect(getVisibleGroupLabels([visibleLabel, emptyLabel, hiddenLabel])).toHaveLength(1);
+      expect(getVisibleGroupLabels([emptyLabel, hiddenLabel])).toHaveLength(0);
+      expect(getVisibleGroupLabels([visibleLabel, visibleLabel, visibleLabel])).toHaveLength(3);
+    });
+  });
+  describe('validateOption', () => {
+    const validOption: Option = {
+      label: 'Label',
+      value: 'Value',
+      selected: false,
+      disabled: false,
+      visible: true,
+      isGroupLabel: false,
+    };
+    it('Converts string to an option where label and value are the string', () => {
+      expect(validateOption('optionX')).toMatchObject({ ...validOption, label: 'optionX', value: 'optionX' });
+    });
+    it('Set all props for partial option', () => {
+      const partial: Partial<Option> = { label: 'partial label', value: 'partial value' };
+      expect(validateOption(partial)).toMatchObject({ ...validOption, ...partial });
+      partial.selected = true;
+      expect(validateOption(partial)).toMatchObject({ ...validOption, ...partial });
+      partial.disabled = true;
+      expect(validateOption(partial)).toMatchObject({ ...validOption, ...partial });
+      partial.visible = false;
+      expect(validateOption(partial)).toMatchObject({ ...validOption, ...partial });
+    });
+    it('Value is set as label if not set', () => {
+      const partial: Partial<Option> = { label: 'partial label' };
+      expect(validateOption(partial)).toMatchObject({ ...validOption, ...partial, value: partial.label });
+    });
+    it('Label is set as value if not set', () => {
+      const partial: Partial<Option> = { value: 'partial value' };
+      expect(validateOption(partial)).toMatchObject({ ...validOption, ...partial, label: partial.value });
+    });
+    it('Label and value are empty if either is set', () => {
+      const partial: Partial<Option> = {};
+      expect(validateOption(partial)).toMatchObject({ ...validOption, value: '', label: '' });
+    });
+    it('Sets group label always false.', () => {
+      const partial: Partial<Option> = { label: 'partial label', value: 'partial value', isGroupLabel: true };
+      expect(validateOption(partial)).toMatchObject({ ...validOption, ...partial, isGroupLabel: false });
+    });
+  });
+  describe('createGroupLabel', () => {
+    const validOption: Option = {
+      label: 'Label',
+      value: 'Value',
+      selected: false,
+      disabled: false,
+      visible: true,
+      isGroupLabel: false,
+    };
+    it('Uses validateOption() to convert a string to an option and sets isGroupLabel to true', () => {
+      expect(createGroupLabel('optionX')).toMatchObject({
+        ...validOption,
+        label: 'optionX',
+        value: 'optionX',
+        isGroupLabel: true,
+      });
+    });
+  });
+  describe('propsToGroups converts given data in SelectProps format to SelectData', () => {
+    it('String options are converted to groups', () => {
+      const options = ['option 0', 'option 1'];
+      expect(propsToGroups({ options })).toMatchObject([
+        {
+          options: [createGroupLabel(''), validateOption(options[0]), validateOption(options[1])],
+        },
+      ]);
+    });
+    it('Groups with string options are converted to groups with labels', () => {
+      const options1 = ['option 0', 'option 1'];
+      const options2 = ['option 2', 'option 3'];
+      expect(
+        propsToGroups({
+          groups: [
+            { label: 'Group1', options: options1 },
+            { label: 'Group2', options: options2 },
+          ],
+        }),
+      ).toMatchObject([
+        {
+          options: [createGroupLabel('Group1'), validateOption(options1[0]), validateOption(options1[1])],
+        },
+        {
+          options: [createGroupLabel('Group2'), validateOption(options2[0]), validateOption(options2[1])],
+        },
+      ]);
+    });
+    it('Empty props are handled', () => {
+      expect(propsToGroups({})).toBeUndefined();
+      expect(propsToGroups({ options: [] })).toMatchObject([
+        {
+          options: [createGroupLabel('')],
+        },
+      ]);
+      expect(propsToGroups({ groups: [] })).toMatchObject([]);
+    });
+  });
+  describe('childrenToGroups converts React children to groups', () => {
+    let groups: Group[] | undefined;
+    beforeEach(() => {
+      groups = undefined;
+    });
+    it('Dom options are converted to groups', () => {
+      const Component = (props: PropsWithChildren<unknown>) => {
+        groups = childrenToGroups(props.children as ReactElement);
+        return <div />;
+      };
+      render(
+        <Component>
+          <option value="Value 1" disabled>
+            Label 1
+          </option>
+          <option value="Value 2" selected>
+            Label 2
+          </option>
+        </Component>,
+      );
+      expect(groups).toMatchObject([
+        {
+          options: [
+            createGroupLabel(''),
+            validateOption({ value: 'Value 1', label: 'Label 1', disabled: true }),
+            validateOption({ value: 'Value 2', label: 'Label 2', selected: true }),
+          ],
+        },
+      ]);
+    });
+    it('Dom groups are converted to groups', () => {
+      const Component = (props: PropsWithChildren<unknown>) => {
+        groups = childrenToGroups(props.children as ReactElement);
+        return <div />;
+      };
+      render(
+        <Component>
+          <optgroup label="Group 1">
+            <option value="Value 1">Label 1</option>
+            <option value="Value 2">Label 2</option>
+          </optgroup>
+          <optgroup label="Group 2">
+            <option value="Value 3">Label 3</option>
+            <option value="Value 4">Label 4</option>
+          </optgroup>
+        </Component>,
+      );
+      expect(groups).toMatchObject([
+        {
+          options: [
+            createGroupLabel('Group 1'),
+            validateOption({ value: 'Value 1', label: 'Label 1' }),
+            validateOption({ value: 'Value 2', label: 'Label 2' }),
+          ],
+        },
+        {
+          options: [
+            createGroupLabel('Group 2'),
+            validateOption({ value: 'Value 3', label: 'Label 3' }),
+            validateOption({ value: 'Value 4', label: 'Label 4' }),
+          ],
+        },
+      ]);
     });
   });
 });

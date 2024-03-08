@@ -1,12 +1,11 @@
 import { Option, SelectData, SelectMetaData } from './types';
 import { ChangeEvent, ChangeHandler } from '../dataProvider/DataContext';
-import { updateSelectedOptionInGroups, updateSelectedGroupOptions, clearAllSelectedOptions } from './utils';
+import { updateSelectedOptionInGroups, clearAllSelectedOptions } from './utils';
 import {
   EventId,
   EventType,
   isClearOptionsClickEvent,
   isCloseEvent,
-  isGroupClickEvent,
   isOpenOrCloseEvent,
   isOptionClickEvent,
   isOutsideClickEvent,
@@ -51,19 +50,6 @@ export const dataUpdater: ChangeHandler<SelectData, SelectMetaData> = (event, da
     updateGroups(newGroups);
     openOrClose(false);
 
-    return true;
-  }
-
-  if (isGroupClickEvent(id, type)) {
-    const clickedOption = payload && (payload.value as Option);
-    if (!clickedOption) {
-      return false;
-    }
-    const newGroups = updateSelectedGroupOptions(current.groups, {
-      ...clickedOption,
-      selected: !clickedOption.selected,
-    });
-    updateGroups(newGroups);
     return true;
   }
 
