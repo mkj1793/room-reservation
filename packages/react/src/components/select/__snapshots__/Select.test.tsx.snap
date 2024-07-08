@@ -35,7 +35,7 @@ exports[`<Select /> spec renders multi select component with groups and filter i
             <svg
               aria-hidden="true"
               aria-label="location"
-              class="icon s"
+              class="icon small"
               role="img"
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
@@ -67,7 +67,7 @@ exports[`<Select /> spec renders multi select component with groups and filter i
           <svg
             aria-hidden="true"
             aria-label="angle-down"
-            class="icon s angleIcon"
+            class="icon small angleIcon"
             role="img"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
@@ -124,7 +124,7 @@ exports[`<Select /> spec renders multi select component with groups and filter i
                 <svg
                   aria-hidden="true"
                   aria-label="cross-circle"
-                  class="icon s"
+                  class="icon small"
                   role="img"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
@@ -198,7 +198,7 @@ exports[`<Select /> spec renders single select component with groups and filter 
             <svg
               aria-hidden="true"
               aria-label="location"
-              class="icon s"
+              class="icon small"
               role="img"
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
@@ -230,7 +230,7 @@ exports[`<Select /> spec renders single select component with groups and filter 
           <svg
             aria-hidden="true"
             aria-label="angle-down"
-            class="icon s angleIcon"
+            class="icon small angleIcon"
             role="img"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
@@ -287,7 +287,7 @@ exports[`<Select /> spec renders single select component with groups and filter 
                 <svg
                   aria-hidden="true"
                   aria-label="cross-circle"
-                  class="icon s"
+                  class="icon small"
                   role="img"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
