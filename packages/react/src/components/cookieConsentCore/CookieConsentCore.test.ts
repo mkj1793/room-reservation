@@ -1260,7 +1260,7 @@ describe('cookieConsentCore', () => {
   });
 
   // - The cookie should contain the timestamp of the consent
-  it('should write and keep cookie timestamp on the moment of first consent', async () => {
+  it.only('should write and keep cookie timestamp on the moment of first consent', async () => {
     instance = await CookieConsentCore.create(urls.siteSettingsJsonUrl, optionsEvent);
     await waitForRoot();
     addBoundingClientRect(getContainerElement());

@@ -1,5 +1,7 @@
 /* eslint-disable lines-between-class-members */
 /* eslint-disable class-methods-use-this */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-await-in-loop */
 
 import { parse, serialize } from 'cookie';
 
@@ -241,13 +243,13 @@ export default class CookieHandler {
    * @param {object} monitorReference - The reference to the monitor object.
    * @return {void}
    */
-  removeConsentWithdrawnCookiesBeforeSave(consentedGroupNames, monitorReference) {
+  async removeConsentWithdrawnCookiesBeforeSave(consentedGroupNames, monitorReference) {
     const consentedKeysArray = this.getAllKeysInConsentedGroups(consentedGroupNames);
     const reason = 'consent withdrawn';
-    monitorReference.BROWSER_STORAGES.forEach(async (storageType) => {
+    for (const storageType of monitorReference.BROWSER_STORAGES) {
       const currentStoredKeysArray = await monitorReference.getCurrentKeys(storageType);
-      monitorReference.deleteKeys(storageType, consentedKeysArray[storageType], currentStoredKeysArray, reason);
-    });
+      await monitorReference.deleteKeys(storageType, consentedKeysArray[storageType], currentStoredKeysArray, reason);
+    }
   }
 
   /**

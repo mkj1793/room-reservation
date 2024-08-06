@@ -3,7 +3,14 @@
 
 import styles from 'hds-core/lib/components/cookie-consent/cookieConsent';
 
-import { getCookieBannerHtml, getGroupHtml, getTableRowHtml, getNotificationHtml, getAriaLiveHtml } from './template';
+import {
+  formatTimestamp,
+  getCookieBannerHtml,
+  getGroupHtml,
+  getTableRowHtml,
+  getNotificationHtml,
+  getAriaLiveHtml,
+} from './template';
 import { getTranslation } from './translations';
 import MonitorAndCleanBrowserStorages from './monitorAndCleanBrowserStorages';
 import CookieHandler from './cookieHandler';
@@ -250,30 +257,74 @@ export class CookieConsentCore {
     return groupSelections;
   }
 
+  timestampElementHandler(acceptedGroups, formReference) {
+    const timestampWrappers = formReference.querySelectorAll('div[data-timestamp]');
+    const cookie = this.#COOKIE_HANDLER.getCookie();
+    let groups = [];
+    if (cookie && cookie.groups) {
+      groups = cookie.groups;
+    }
+    // const { groups } = this.#COOKIE_HANDLER.getCookie();
+    timestampWrappers.forEach((timestampWrapper) => {
+      const elementGroup = timestampWrapper.dataset.timestamp;
+      let timestampHtml;
+      if (acceptedGroups.includes(elementGroup)) {
+        let timestamp;
+        const cookieGroup = groups[elementGroup];
+        if (cookieGroup) {
+          timestamp = cookieGroup.timestamp;
+        } else {
+          // This should not happen, but lets make sure all bases are covered.
+          timestamp = Date.now();
+        }
+        timestampHtml = formatTimestamp(
+          this.#formatDateTimeObject(timestamp),
+          elementGroup,
+          this.#SITE_SETTINGS.translations,
+          this.#LANGUAGE,
+          this.#SITE_SETTINGS.fallbackLanguage,
+        );
+      } else {
+        timestampHtml = '';
+      }
+      // eslint-disable-next-line no-param-reassign
+      timestampWrapper.innerHTML = timestampHtml;
+    });
+  }
+
   /**
    * Handles button events based on the selection.
    * @private
    * @param {string} selection - The selection type ('required', 'all', 'selected').
    * @param {object} formReference - The reference to the form.
    * @param {object} siteSettings - The site settings object.
-   * @return {void}
+   * @return {Promise<void>}
    */
-  #handleButtonEvents(selection, formReference) {
+  async #handleButtonEvents(selection, formReference) {
     let acceptedGroups = [];
     switch (selection) {
       case 'required':
+        console.debug('case:', selection);
         acceptedGroups = this.#COOKIE_HANDLER.getRequiredGroupNames();
         this.#COOKIE_HANDLER.removeConsentWithdrawnCookiesBeforeSave(acceptedGroups, this.#MONITOR);
         this.#COOKIE_HANDLER.saveConsentedGroups(acceptedGroups, false);
+        // update template timestamp
+        this.timestampElementHandler(acceptedGroups, formReference);
         break;
       case 'all':
+        console.debug('case:', selection);
         acceptedGroups = this.#getGroupCheckboxStatus(formReference, true);
+        this.timestampElementHandler(acceptedGroups, formReference);
+        // update template timestamp
         this.#COOKIE_HANDLER.saveConsentedGroups(acceptedGroups, false);
         break;
       case 'selected':
+        console.debug('case:', selection);
         acceptedGroups = this.#getGroupCheckboxStatus(formReference);
         this.#COOKIE_HANDLER.removeConsentWithdrawnCookiesBeforeSave(acceptedGroups, this.#MONITOR);
         this.#COOKIE_HANDLER.saveConsentedGroups(acceptedGroups, false);
+        // update template timestamp
+        this.timestampElementHandler(acceptedGroups, formReference);
         break;
       default:
         // We should not be here, better do nothing
@@ -555,8 +606,8 @@ export class CookieConsentCore {
     // Add button events
     const shadowRootForm = shadowRoot.querySelector('form');
     shadowRoot.querySelectorAll('button[type=submit]').forEach((button) => {
-      button.addEventListener('click', (e) => {
-        this.#handleButtonEvents(e.target.dataset.approved, shadowRootForm);
+      button.addEventListener('click', async (e) => {
+        await this.#handleButtonEvents(e.target.dataset.approved, shadowRootForm);
       });
     });
 
