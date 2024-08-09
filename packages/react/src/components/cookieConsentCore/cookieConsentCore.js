@@ -304,7 +304,6 @@ export class CookieConsentCore {
     let acceptedGroups = [];
     switch (selection) {
       case 'required':
-        console.debug('case:', selection);
         acceptedGroups = this.#COOKIE_HANDLER.getRequiredGroupNames();
         this.#COOKIE_HANDLER.removeConsentWithdrawnCookiesBeforeSave(acceptedGroups, this.#MONITOR);
         this.#COOKIE_HANDLER.saveConsentedGroups(acceptedGroups, false);
@@ -312,14 +311,12 @@ export class CookieConsentCore {
         this.timestampElementHandler(acceptedGroups, formReference);
         break;
       case 'all':
-        console.debug('case:', selection);
         acceptedGroups = this.#getGroupCheckboxStatus(formReference, true);
         this.timestampElementHandler(acceptedGroups, formReference);
         // update template timestamp
         this.#COOKIE_HANDLER.saveConsentedGroups(acceptedGroups, false);
         break;
       case 'selected':
-        console.debug('case:', selection);
         acceptedGroups = this.#getGroupCheckboxStatus(formReference);
         this.#COOKIE_HANDLER.removeConsentWithdrawnCookiesBeforeSave(acceptedGroups, this.#MONITOR);
         this.#COOKIE_HANDLER.saveConsentedGroups(acceptedGroups, false);
