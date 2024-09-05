@@ -1,0 +1,22 @@
+---
+slug: '/foundation/design-tokens/tabs'
+title: 'Colour tokens'
+---
+
+import LeadParagraph from '../../../../components/LeadParagraph';
+import Layout from '../../../../components/layout';
+import PageTabs from '../../../../components/PageTabs';
+import StatusLabel from '../../../../components/StatusLabel';
+
+# Shadow
+
+<StatusLabel type="info">Stable</StatusLabel>
+
+<LeadParagraph>Shadow tokens are used under certain elements to create visual distinction.</LeadParagraph>
+
+<PageTabs pageContext={props.pageContext}>
+  <PageTabs.TabList>
+    <PageTabs.Tab href="/">Usage</PageTabs.Tab>
+  </PageTabs.TabList>
+  <PageTabs.TabPanel>{props.children}</PageTabs.TabPanel>
+</PageTabs>
