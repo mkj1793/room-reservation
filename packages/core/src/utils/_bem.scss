@@ -145,6 +145,66 @@ $elementDelimeter: '__';
   }
 }
 
+// use inside any selector to create linked classes like <selector>.hds-<block>
+@mixin linkedBlock($block) {
+  $parent-selector: get-parent-selector('#{&}');
+  $last-selector: get-last-selector('#{&}');
+  // stylelint-disable-next-line scss/function-no-unknown
+  $element: get-element($last-selector);
+
+  @at-root {
+    @if $parent-selector {
+      #{$parent-selector}.#{$last-selector}#{$blockPrefix + $block} {
+        @content;
+      }
+    } @else {
+      #{$last-selector}.#{$blockPrefix + $block} {
+        @content;
+      }
+    }
+  }
+}
+
+// use inside any selector to create modifier like <selector>--<modifier>
+@mixin linkedModifier($modifier) {
+  $parent-selector: get-parent-selector('#{&}');
+  $last-selector: get-last-selector('#{&}');
+  // stylelint-disable-next-line scss/function-no-unknown
+  $element: get-element($last-selector);
+
+  @at-root {
+    @if $parent-selector {
+      #{$parent-selector}.#{$last-selector}#{$modifierDelimeter}#{$modifier} {
+        @content;
+      }
+    } @else {
+      #{$last-selector}#{$modifierDelimeter}#{$modifier} {
+        @content;
+      }
+    }
+  }
+}
+
+// use inside any selector to create linked classes like <selector>.<className>
+@mixin linkedClass($block) {
+  $parent-selector: get-parent-selector('#{&}');
+  $last-selector: get-last-selector('#{&}');
+  // stylelint-disable-next-line scss/function-no-unknown
+  $element: get-element($last-selector);
+
+  @at-root {
+    @if $parent-selector {
+      #{$parent-selector}.#{$last-selector}#{$element} {
+        @content;
+      }
+    } @else {
+      #{$last-selector}.#{$block} {
+        @content;
+      }
+    }
+  }
+}
+
 // end of sass-easy-bem
 
 // HDS add-on to create .hds-<block>--modifier instead of .hds-<block>.hds-<block>--modifier
@@ -156,10 +216,33 @@ $elementDelimeter: '__';
   }
 }
 
+// HDS add-on to to append new modifier to current selector
+@mixin childModifier($block, $modifier) {
+  .#{$blockPrefix + $block}#{$modifierDelimeter}#{$modifier} {
+    @content;
+  }
+}
+
 // HDS add-on to create .hds-<block>__element instead of .hds-<block>.hds-<block>__element
 @mixin unscopedElement($block, $element) {
   @at-root {
     .#{$blockPrefix + $block}#{$elementDelimeter}#{$element} {
+      @content;
+    }
+  }
+}
+
+// HDS add-on to to append new element to current selector
+@mixin childElement($block, $element) {
+  .#{$blockPrefix + $block}#{$elementDelimeter}#{$element} {
+    @content;
+  }
+}
+
+// HDS add-on to create .hds-<block>-className
+@mixin dashedClassName($block, $className) {
+  @at-root {
+    .#{$blockPrefix + $block}-#{$className} {
       @content;
     }
   }
