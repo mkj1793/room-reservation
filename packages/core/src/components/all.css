@@ -17,6 +17,6 @@
 @import url('./selection-group/selection-group.css');
 @import url('./status-label/status-label.scss');
 @import url('./step-by-step/step-by-step.css');
-@import url('./table/table.css');
+@import url('./table/table.scss');
 @import url('./tag/tag.css');
 @import url('./text-input/text-input.css');
