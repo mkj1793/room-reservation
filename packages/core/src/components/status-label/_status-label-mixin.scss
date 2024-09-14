@@ -1,4 +1,4 @@
-@use '../../utils/bem' as BemUtil;
+@use '../../utils/bem-util' as *;
 
 @mixin base {
   --status-label-background: var(--color-black-10);
@@ -55,23 +55,18 @@
   $info: false,
   $error: false,
   $alert: false,
-  $success: false,
-  $override: null
+  $success: false
 ) {
-  $className: 'status-label';
-
-  @if $override {
-    $className: $override;
-  }
+  $blockName: 'status-label';
 
   @if $all or $base {
-    @include BemUtil.block($className, if($override, true, false)) {
+    @include create($block: $blockName) {
       @include base;
     }
   }
 
   @if $all or $withIcon {
-    @include BemUtil.unscopedModifier($className, 'with-icon') {
+    @include blockModifier($blockName, 'with-icon') {
       @include withIcon;
     }
   }
@@ -79,36 +74,32 @@
   @if $all or $icon {
     $iconClassName: 'hds-status-label-icon';
 
-    @if $override {
-      $iconClassName: $override;
-    }
-
     // the original, pre-sass css had "-icon" which is not bem compliant, so manually created same
-    .#{$iconClassName} {
+    @include create($block: $blockName, $dashed: 'icon') {
       @include icon;
     }
   }
 
   @if $all or $info {
-    @include BemUtil.unscopedModifier($className, 'info') {
+    @include blockModifier($blockName, 'info') {
       @include info;
     }
   }
 
   @if $all or $success {
-    @include BemUtil.unscopedModifier($className, 'success') {
+    @include blockModifier($blockName, 'success') {
       @include success;
     }
   }
 
   @if $all or $alert {
-    @include BemUtil.unscopedModifier($className, 'alert') {
+    @include blockModifier($blockName, 'alert') {
       @include alert;
     }
   }
 
   @if $all or $error {
-    @include BemUtil.unscopedModifier($className, 'error') {
+    @include blockModifier($blockName, 'error') {
       @include error;
     }
   }
