@@ -43,6 +43,7 @@
     "postcss": "8.2.15",
     "postcss-classes-to-mixins": "^3.0.1",
     "postcss-cli": "8.3.1",
+    "postcss-discard-comments": "^7.0.3",
     "postcss-import": "12.0.1",
     "postcss-inline-svg": "4.1.0",
     "postcss-preset-env": "6.7.0",

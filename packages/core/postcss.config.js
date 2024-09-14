@@ -11,6 +11,7 @@ module.exports = ({ env }) => ({
     }),
     require('postcss-inline-svg')(),
     require('autoprefixer')({}),
+    require('postcss-discard-comments')(),
     env === 'minify'
       ? require('cssnano')({
           preset: [
