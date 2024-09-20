@@ -6,12 +6,21 @@
 @use "sass:meta";
 @use "sass:map";
 @use "sass:list";
+@use "sass:selector";
 @use "sass-easy-bem/sass-easy-bem.scss" as BemNpm;
 
 /// Examples
 ///
+/// Result:   .hds-table
+/// SASS:     @include BemUtil.block('table')
+///
+///           or
+///
+///           @include BemUtil.create($block: 'table')
+///
 /// Result:   .hds-table-container
 /// SASS:     @include BemUtil.create($block: 'table', $dashed: 'container')
+///
 ///
 /// Result:   .hds-table__content--text-align-td-right
 /// SASS:     @include BemUtil.create($block: 'table', $element: 'content', $modifier:'text-align-td-right')
@@ -33,8 +42,10 @@
 /// Result:   .hds-table--dark
 /// SASS:     @include BemUtil.blockModifier('table', 'dark')
 ///
+///
 /// Result:   .hds-table.hds-table--dark
-/// SASS:     @include BemUtil.scopedModifier('table', 'dark')
+/// SASS:     @include BemUtil.blockCompoundModifier('table', 'dark')
+///
 ///
 /// Result:   .hds-table--dense.hds-table
 /// SASS:      @include BemUtil.blockModifier('table', 'dense') {
@@ -43,12 +54,14 @@
 ///               }
 ///            }
 ///
+///
 /// Result:   .hds-table--dense .hds-table__content
 /// SASS:     @include BemUtil.blockModifier('table', 'dense') {
 ///               @include BemUtil.element('caption') {
 ///                 ...
 ///               }
 ///            }
+///
 ///
 /// Result:   .hds-table--dense .hds-table__content
 /// SASS:     elementInModifier('table', $modifierName, $elementName)
@@ -62,6 +75,7 @@
 ///               }
 ///             }
 ///           }
+///
 ///
 ///
 /// Result:   .hds-table--with-vertical-lines.hds-table--with-vertical-header .hds-table__header-row
@@ -81,6 +95,7 @@
 ///             }
 ///           }
 ///
+///
 /// Result:   .hds-table--with-vertical-lines.hds-table--with-vertical-header
 /// SASS:     BemUtil.compoundModifiers('table', 'with-vertical-lines', 'with-vertical-header')
 ///
@@ -93,6 +108,7 @@
 ///               }
 ///             }
 ///           }
+///
 ///
 /// Result:   css
 /// SASS:     code
@@ -313,8 +329,15 @@ $elementDelimeter: '__';
   }
 }
 
+/// shorthand for append($dashed: $className)
+@mixin dashed($className) {
+  @include append($dashed: $className) {
+    @content;
+  }
+}
+
 /// shorthand for creating .hds-block.hds-block--modifier
-@mixin scopedModifier($blockName, $modifierName) {
+@mixin blockCompoundModifier($blockName, $modifierName) {
   @include block($blockName) {
     @include append($block: $blockName) {
       @include modifier($modifierName) {
@@ -367,7 +390,7 @@ $elementDelimeter: '__';
   }
 }
 
-/// shorthand for creating .hds-block--modifier1.hds-block--modifier2
+/// shorthand for creating .hds-block--modifier1.hds-block--modifier2 .hds-block__element
 @mixin elementInCompoundModifiers($blockName, $modifier1Name, $modifier2Name, $elementName) {
   @include blockModifier($blockName, $modifier1Name) {
     @include addCompound($block: $blockName) {
@@ -378,6 +401,242 @@ $elementDelimeter: '__';
           }
         }
       }
+    }
+  }
+}
+
+@function parse-args($args) {
+  $block: '';
+  $truthy: ();
+  $partials: ();
+  $hasRoot: false;
+  $argsAsMap: $args;
+  $all: map.get($argsAsMap, 'all');
+  $hasOthersThanAll: false;
+
+  /// @debug map.keys($argsAsMap);
+
+  $parent: &;
+
+  /// @debug 'parent:#{$parent}';
+
+  @if $parent {
+    $hasRoot: true;
+  }
+
+  /// @debug 'hasRoot1: #{$hasRoot}';
+
+  @each $type, $value in $argsAsMap {
+    $prefix: null;
+
+    @if $type == 'blockName' {
+      $block: $value;
+    } @else {
+      $typeOf: meta.type-of($value);
+
+      @if $type != 'all' {
+        $hasOthersThanAll: true;
+      }
+
+      @if $typeOf == 'string' {
+        /// @debug '#{$type}==#{$value}';
+        $combinedPartialName: '#{$type}#{$elementDelimeter}#{$value}';
+        $partials: map.set($partials, $combinedPartialName, true);
+        $partials: map.set($partials, $type, $value);
+      } @else if $typeOf == 'bool' and $value {
+        /// @debug '#{$type}==#{$value}';
+        $truthy: map.set($truthy, $type, $value);
+      } @else if $typeOf == 'map' {
+        @each $elementName, $elementValue in $value {
+          $combinedPartialName: '#{$type}#{$elementDelimeter}#{$elementName}';
+          $partials: map.set($partials, $type, true);
+
+          /// @debug 'el #{$combinedPartialName}==#{$elementValue}';
+          $partials: map.set($partials, $combinedPartialName, $elementValue);
+        }
+      }
+    }
+  }
+
+  @if $hasOthersThanAll and $all {
+    @warn "parse-args(): 'All' set to true, but partials are configured. 'All' is set to false.";
+
+    $truthy: map.set($truthy, 'all', false);
+  }
+
+  $rules: (
+    'block': $block,
+    'truthy': $truthy,
+    'partials': $partials,
+    'hasRoot': $hasRoot,
+  );
+
+  /// @debug '####';
+  /// @debug meta.inspect($rules);
+  /// @debug meta.inspect($truthy);
+  // @debug meta.inspect($partials);
+
+  /// @debug '####';
+  @return $rules;
+}
+
+/// $modifierName: true
+/// $modifierName: ($elementName: true)
+/// $modifierName: ($elementName: "selector")
+@function get-arg-value($rules, $modifierOrBase: null, $element: null) {
+  $partials: map.get($rules, 'partials');
+  $truthy: map.get($rules, 'truthy');
+  $all: map.get($truthy, 'all') == true;
+
+  /// @debug 'modifierOrBase::#{$modifierOrBase}';
+  @if $all {
+    @return true;
+  }
+
+  @if $modifierOrBase {
+    $value: map.get($truthy, $modifierOrBase) or map.get($partials, $modifierOrBase);
+
+    /// @debug 'value modifierOrBase::#{$modifierOrBase}==#{$value}';
+    @if meta.type-of($value) == 'bool' and $value {
+      @return true;
+    }
+
+    @if meta.type-of($element) == 'null' and $value {
+      @return true;
+    }
+
+    /// @debug 'el test::#{$element}==#{$value}';
+    @if $element {
+      $combinedPartialName: '#{$modifierOrBase}#{$elementDelimeter}#{$element}';
+      $value: map.get($partials, $combinedPartialName);
+
+      /// @debug 'value c combinedPartialName::#{$combinedPartialName}==#{$value}';
+      @if $value {
+        @return $value;
+      }
+    }
+  }
+
+  @return null;
+}
+
+@mixin blockIfNeeded($rules) {
+  $value: get-arg-value($rules, 'base');
+  $hasRoot: map.get($rules, 'hasRoot');
+
+  @if $hasRoot and $value {
+    @content;
+  } @else if $value {
+    @include create($block: map.get($rules, 'block')) {
+      @content;
+    }
+  }
+}
+
+@mixin blockModifierIfNeeded($rules, $modifierName) {
+  $value: get-arg-value($rules, $modifierName);
+  $hasRoot: map.get($rules, 'hasRoot');
+
+  @if $hasRoot and $value {
+    @content;
+  } @else if $value {
+    @include create($block: map.get($rules, 'block'), $modifier: $modifierName) {
+      @content;
+    }
+  }
+}
+
+@mixin blockModifierElementIfNeeded($rules, $modifierName, $elementName) {
+  $value: get-arg-value($rules, $modifierName, $elementName);
+  $hasRoot: map.get($rules, 'hasRoot');
+
+  @if $hasRoot and $value {
+    @content;
+  } @else if $value {
+    @include create($block: map.get($rules, 'block'), $modifier: $modifierName, $element: $elementName) {
+      @content;
+    }
+  }
+}
+
+@mixin modifierIfNeeded($rules, $modifierName) {
+  $value: get-arg-value($rules, $modifierName);
+  $hasRoot: map.get($rules, 'hasRoot');
+
+  @if $hasRoot and $value {
+    @content;
+  } @else if $value {
+    @include modifier($modifierName) {
+      @content;
+    }
+  }
+}
+
+@mixin dashedIfNeeded($rules, $className) {
+  $value: get-arg-value($rules, $className);
+  $hasRoot: map.get($rules, 'hasRoot');
+
+  @if $hasRoot and $value {
+    @content;
+  } @else if $value {
+    @include dashed($className) {
+      @content;
+    }
+  }
+}
+
+@mixin blockCompoundModifierIfNeeded($rules, $modifierName) {
+  $value: get-arg-value($rules, $modifierName);
+  $hasRoot: map.get($rules, 'hasRoot');
+
+  @if $hasRoot and $value {
+    @content;
+  } @else if $value {
+    @include blockCompoundModifier(map.get($rules, 'block'), $modifierName) {
+      @content;
+    }
+  }
+}
+
+@mixin elementIfNeeded($rules, $element) {
+  $value: get-arg-value($rules, $element);
+  $hasRoot: map.get($rules, 'hasRoot');
+
+  @if $hasRoot and $value {
+    @content;
+  } @else if $value {
+    @include element($element) {
+      @content;
+    }
+  }
+}
+
+@mixin contentIfNeeded($rules, $identifier) {
+  $value: get-arg-value($rules, $identifier);
+
+  @if $value {
+    @content;
+  }
+}
+
+@mixin compoundModifiersIfNeeded($blockName, $modifier1Name, $modifier2Name) {
+  $mod1Value: get-arg-value($rules, $modifier1Name);
+  $mod2Value: get-arg-value($rules, $modifier2Name);
+
+  @if $mod1Value and $mod2Value {
+    @include blockCompoundModifier(map.get($rules, 'block'), $modifier1Name, $modifier2Name) {
+      @content;
+    }
+  }
+}
+
+@mixin elementInCompoundModifiersIfNeeded($blockName, $modifier1Name, $modifier2Name, $elementName) {
+  $mod1Value: get-arg-value($rules, $modifier1Name, $elementName);
+  $mod2Value: get-arg-value($rules, $modifier2Name, $elementName);
+
+  @if $mod1Value and $mod2Value {
+    @include elementInCompoundModifiers(map.get($rules, 'block'), $modifier1Name, $modifier2Name) {
+      @content;
     }
   }
 }
