@@ -1,2 +1,43 @@
 @use './table-mixin' as *;
+
+/*
+@include table(
+  $all: false,
+  $dark: 'content',
+  $light: (
+    'element': 'selector',
+  ),
+  $base: (
+    'baseElement': 'BASEselector',
+  ),
+  $dense: true,
+  $container: 'newContainer'
+);
+*/
+.containerAsX {
+  /// @include table($all: false, $base: true, $container: true);
+}
+
 @include table;
+
+/*
+.base {
+  .base2 div {
+    @include table(
+      $elements: (
+        'base': true,
+        'content': true,
+        'tableHeading': '.MyNewHeading',
+      ),
+      $modifiers: (
+        'dark': '.not-dark',
+        'light': false,
+      ),
+      $extras: (
+        'container': true,
+        'noExtraBlocks': false,
+      )
+    );
+  }
+}
+*/

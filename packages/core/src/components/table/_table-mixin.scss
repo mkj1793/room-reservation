@@ -1,102 +1,178 @@
-@use '../../utils/bem-util' as *;
+/* stylelint-disable scss/function-no-unknown */
+@use '../../utils/ruled-bem' as *;
 @use '../../utils/layout' as Layout;
+@use "sass:map";
 
-@mixin container {
-  overflow-x: auto;
+/// elements: base, content, caption, tableHeading, headerRow
+/// modifiers: dense,dark,light,zebra, withVerticalLines, withVerticalHeader, textAlignRight
+/// extras: container, noExtraBlocks
+@mixin table($all: true, $elements: true, $modifiers: true, $extras: true) {
+  $void: args-to-rules(
+    (
+      'block': 'table',
+      'all': $all,
+      'elements': $elements,
+      'modifiers': $modifiers,
+      'extras': $extras,
+    )
+  );
 
-  &:focus {
-    outline: var(--color-focus-outline) 3px solid;
-  }
-}
+  /*
+  @include block($rules) {
+    @include dashed($rules, 'container') {
+      overflow-x: auto;
 
-@mixin base {
-  --content-background-color: var(--color-white);
-
-  border-collapse: collapse;
-  line-height: 1.5;
-  width: 100%;
-}
-
-@mixin caption {
-  font-size: var(--fontsize-body-l);
-  font-weight: normal;
-  line-height: var(--lineheight-l);
-  margin-bottom: var(--spacing-s);
-  text-align: left;
-}
-
-@mixin th {
-  border-bottom: 1px solid var(--color-black-20);
-  font-size: var(--fontsize-body-m);
-  font-weight: 500;
-  line-height: var(--lineheight-l);
-  padding: var(--spacing-xs) var(--spacing-m);
-  text-align: left;
-  white-space: nowrap;
-}
-
-@mixin td {
-  background-color: var(--content-background-color);
-  border-bottom: 1px solid var(--color-black-50);
-  color: var(--color-black-90);
-  font-size: var(--fontsize-body-m);
-  font-weight: 400;
-  line-height: 24px;
-  padding: var(--spacing-xs) var(--spacing-m);
-}
-
-@mixin table(
-  $all: true,
-  $base: false,
-  $dark: false,
-  $light: false,
-  $dense: false,
-  $zebra: false,
-  $withVerticalLines: false,
-  $withVerticalHeader: false,
-  $container: false,
-  $textAlignRight: false
-) {
-  $blockName: 'table';
-
-  @if $all or $container {
-    @include create($block: $blockName, $dashed: 'container') {
-      @include container;
+      &:focus {
+        outline: var(--color-focus-outline) 3px solid;
+      }
     }
   }
+  */
 
-  @if $all or $base {
-    @include block($blockName) {
-      @include base;
+  @include block {
+    @include content('base') {
+      --content-background-color: var(--color-white);
 
+      border-collapse: collapse;
+      line-height: 1.5;
+      width: 100%;
+    }
+
+    /*
+    @if is-block-content-allowed() {
+      --do-not-render-this: var(--color-zero);
+    }
+    */
+
+    @include content('table-heading') {
       th {
-        @include th;
+        border-bottom: 1px solid var(--color-black-20);
+        font-size: var(--fontsize-body-m);
+        font-weight: 500;
+        line-height: var(--lineheight-l);
+        padding: var(--spacing-xs) var(--spacing-m);
+        text-align: left;
+        white-space: nowrap;
+      }
+    }
+
+    @include element('content') {
+      tr td {
+        background-color: var(--content-background-color);
+        border-bottom: 1px solid var(--color-black-50);
+        color: var(--color-black-90);
+        font-size: var(--fontsize-body-m);
+        font-weight: 400;
+        line-height: 24px;
+        padding: var(--spacing-xs) var(--spacing-m);
       }
 
+      @include modifier('text-align-right') {
+        text-align: right;
+      }
+    }
+
+    @include element('header-row') {
+      background-color: var(--header-background-color);
+    }
+
+    @include element('caption') {
+      font-size: var(--fontsize-body-l);
+      font-weight: normal;
+      line-height: var(--lineheight-l);
+      margin-bottom: var(--spacing-s);
+      text-align: left;
+    }
+
+    /// adds extra ".hds-table", so selector is .hds-table.hds-table--dark
+    /// if "noExtraBlocks" === true, selector is .hds-table--dark
+    @include extraRule($block: true, $rule: 'noExtraBlocks') {
+      @include modifier('dark') {
+        --header-background-color: var(--color-bus1);
+
+        th.dark {
+          color: var(--color-white);
+        }
+
+        .hello.dark1 {
+          color: var(--color-white);
+        }
+      }
+    }
+
+    @include modifier('dark') {
       @include element('content') {
-        @if $all or $textAlignRight {
-          @include modifier('text-align-td-right') {
-            td {
-              text-align: right;
-            }
-          }
-        }
-
-        tr td {
-          @include td;
+        div.dark.content {
+          color: var(--color-white);
         }
       }
 
-      @include element('header-row') {
-        background-color: var(--header-background-color);
-      }
-
-      @include element('caption') {
-        @include caption;
+      @include content('content') {
+        --dark-content: var(--color-zero);
       }
     }
   }
 
+  @include modifier('light') {
+    --header-background-color: var(--color-bus2);
+
+    @include element('caption') {
+      th.light {
+        color: var(--color-white);
+      }
+    }
+  }
+}
+
+/*
+    @include content($rules, $element: 'tableHeading') {
+      th {
+        border-bottom: 1px solid var(--color-black-20);
+        font-size: var(--fontsize-body-m);
+        font-weight: 500;
+        line-height: var(--lineheight-l);
+        padding: var(--spacing-xs) var(--spacing-m);
+        text-align: left;
+        white-space: nowrap;
+      }
+    }
+
+    @include element($rules, 'content') {
+      tr td {
+        background-color: var(--content-background-color);
+        border-bottom: 1px solid var(--color-black-50);
+        color: var(--color-black-90);
+        font-size: var(--fontsize-body-m);
+        font-weight: 400;
+        line-height: 24px;
+        padding: var(--spacing-xs) var(--spacing-m);
+      }
+    }
+
+    
+    @include element('header-row') {
+      background-color: var(--header-background-color);
+    }
+
+    @include element('caption') {
+      @include caption;
+    }
+  }
+  
+  */
+
+/*
+  @include blockModifier($rules, 'dark') {
+    --header-background-color: var(--color-bus);
+  }
+
+  @include blockCompoundModifier($rules, 'dark') {
+    th {
+      color: var(--color-white);
+    }
+  }
+
+  
   @if $all or $dark {
     /// to create .hds-table--dark (was in css)
     @include blockModifier($blockName, 'dark') {
@@ -104,7 +180,7 @@
     }
 
     /// to create .hds-table.hds-table--dark th (was in css)
-    @include scopedModifier($blockName, 'dark') {
+    @include blockCompoundModifier($blockName, 'dark') {
       th {
         color: var(--color-white);
       }
@@ -118,7 +194,7 @@
     }
 
     /// to create .hds-table.hds-table--light th (was in css)
-    @include scopedModifier($blockName, 'light') {
+    @include blockCompoundModifier($blockName, 'light') {
       th {
         color: var(--color-black-90);
       }
@@ -237,3 +313,250 @@
     }
   }
 }
+*/
+
+/// elements: base, content, caption, th, headerRow
+/// modifiers: dense,dark,light,zebra,withVerticalLines,withVerticalHeader, textAlignRight
+/// extras: container,
+
+/*
+@mixin table(
+  $all: true,
+  $base: false,
+  $tableHeading: false,
+  $content: false,
+  $dark: false,
+  $light: false,
+  $dense: false,
+  $zebra: false,
+  $withVerticalLines: false,
+  $withVerticalHeader: false,
+  $container: false,
+  $textAlignRight: false
+) {
+  $blockName: (
+    'blockName': 'table',
+  );
+  $allArgs: map.merge(
+    $blockName,
+    (
+      'all': $all,
+      'base': $base,
+      'dark': $dark,
+      'light': $light,
+      'dense': $dense,
+    )
+  );
+
+  /// @debug map.keys($allArgs);
+
+  $rules: args-to-rules($allArgs);
+  $blockName: 'table';
+
+  // base:true
+  @include blockIfNeeded($rules) {
+    @include dashedIfNeeded($rules, 'container') {
+      overflow-x: auto;
+
+      &:focus {
+        outline: var(--color-focus-outline) 3px solid;
+      }
+    }
+  }
+
+  @include blockIfNeeded($rules) {
+    @include contentIfNeeded($rules, 'base') {
+      --content-background-color: var(--color-white);
+
+      border-collapse: collapse;
+      line-height: 1.5;
+      width: 100%;
+    }
+
+    @include contentIfNeeded($rules, 'tableHeading') {
+      th {
+        border-bottom: 1px solid var(--color-black-20);
+        font-size: var(--fontsize-body-m);
+        font-weight: 500;
+        line-height: var(--lineheight-l);
+        padding: var(--spacing-xs) var(--spacing-m);
+        text-align: left;
+        white-space: nowrap;
+      }
+    }
+
+    @include elementIfNeeded($rules, 'content') {
+      tr td {
+        background-color: var(--content-background-color);
+        border-bottom: 1px solid var(--color-black-50);
+        color: var(--color-black-90);
+        font-size: var(--fontsize-body-m);
+        font-weight: 400;
+        line-height: 24px;
+        padding: var(--spacing-xs) var(--spacing-m);
+      }
+    }
+
+    
+    @include element('header-row') {
+      background-color: var(--header-background-color);
+    }
+
+    @include element('caption') {
+      @include caption;
+    }
+      
+  }
+
+  @include blockModifierIfNeeded($rules, 'dark') {
+    --header-background-color: var(--color-bus);
+  }
+
+  @include blockCompoundModifierIfNeeded($rules, 'dark') {
+    th {
+      color: var(--color-white);
+    }
+  }
+
+  /*
+  @if $all or $dark {
+    /// to create .hds-table--dark (was in css)
+    @include blockModifier($blockName, 'dark') {
+      --header-background-color: var(--color-bus);
+    }
+
+    /// to create .hds-table.hds-table--dark th (was in css)
+    @include blockCompoundModifier($blockName, 'dark') {
+      th {
+        color: var(--color-white);
+      }
+    }
+  }
+
+  @if $all or $light {
+    /// to create .hds-table--dark (was in css)
+    @include blockModifier($blockName, 'light') {
+      --header-background-color: var(--color-silver);
+    }
+
+    /// to create .hds-table.hds-table--light th (was in css)
+    @include blockCompoundModifier($blockName, 'light') {
+      th {
+        color: var(--color-black-90);
+      }
+    }
+  }
+
+  @if $all or $dense {
+    @include blockModifier($blockName, 'dense') {
+      /// to create .hds-table--dense.hds-table th
+      @include append($block: $blockName) {
+        th {
+          font-size: var(--fontsize-body-s);
+          font-weight: bold;
+          padding: 9px var(--spacing-s);
+        }
+      }
+
+      /// to create  .hds-table--dense .hds-table
+      @include addDescendant($block: $blockName) {
+        /// to create  .hds-table--dense .hds-table__content
+        @include element('content') {
+          tr td {
+            font-size: var(--fontsize-body-s);
+            padding: 9px var(--spacing-s);
+          }
+        }
+
+        /// to create  .hds-table--dense .hds-table__caption
+        @include element('caption') {
+          font-size: var(--fontsize-body-m);
+          line-height: var(--lineheight-l);
+          margin-bottom: var(--spacing-xs);
+        }
+      }
+    }
+  }
+
+  @if $all or $zebra {
+    @include elementInModifier($blockName, 'zebra', 'content') {
+      tr td {
+        border-bottom: none;
+      }
+
+      tr:nth-child(even) td {
+        background-color: var(--color-black-10);
+      }
+    }
+  }
+
+  @if $all or $withVerticalLines {
+    @include blockModifier($blockName, 'with-vertical-lines') {
+      @include addDescendant($block: $blockName) {
+        @include element('content') {
+          border-left: 1px solid var(--color-black-50);
+
+          td {
+            border-right: 1px solid var(--color-black-50);
+          }
+        }
+
+        @include element('header-row') {
+          border-left: 1px solid var(--header-background-color);
+          border-right: 1px solid var(--header-background-color);
+        }
+      }
+    }
+  }
+
+  @if $all or $withVerticalHeader {
+    @include blockElement($blockName, 'vertical-header-column') {
+      background-color: var(--header-background-color);
+    }
+
+    @if $all or $withVerticalLines {
+      /// to create  .hds-table--with-vertical-header.hds-table--with-vertical-lines .hds-table__content
+      @include elementInCompoundModifiers($blockName, 'with-vertical-header', 'with-vertical-lines', 'content') {
+        border-left: none;
+      }
+
+      /// to create .hds-table--with-vertical-lines.hds-table--with-vertical-header .hds-table__header-row
+      @include elementInCompoundModifiers($blockName, 'with-vertical-lines', 'with-vertical-header', 'header-row') {
+        border-left: none;
+      }
+    }
+  }
+
+  @if $all or $textAlignRight {
+    @include blockModifier($blockName, 'text-align-right') {
+      text-align: right;
+    }
+  }
+
+  @include Layout.below-medium {
+    @if $all or $base {
+      @include block($blockName) {
+        th {
+          font-size: var(--fontsize-body-s);
+          font-weight: bold;
+          padding: 9px var(--spacing-s);
+        }
+
+        @include element('content') {
+          tr td {
+            font-size: var(--fontsize-body-s);
+            padding: 9px var(--spacing-s);
+          }
+        }
+
+        @include element('caption') {
+          font-size: var(--fontsize-heading-xxs);
+          letter-spacing: 0.2px;
+          line-height: var(--lineheight-l);
+          margin-bottom: var(--spacing-xs);
+        }
+      }
+    }
+  }
+}
+*/
