@@ -1,0 +1,17 @@
+@mixin handle-output($level) {
+  $contentOnly: map.get($level, 'contentOnly');
+  $isAllowed: map.get($level, 'isAllowed');
+  $selector: map.get($level, 'selector');
+
+  /// debug 'selector #{$selector}';
+
+  @if $contentOnly {
+    @content;
+  } @else if $isAllowed {
+    @at-root {
+      #{$selector} {
+        @content;
+      }
+    }
+  }
+}

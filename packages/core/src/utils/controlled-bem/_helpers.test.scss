@@ -1,0 +1,13 @@
+/* stylelint-disable scss/function-no-unknown */
+@use 'sass-true' as *;
+@use './helpers' as helpers;
+
+@include describe('log') {
+  @include it('remove this') {
+    @include assert-equal(helpers.log($block: 'blockName', $elem: 'elem'), true);
+
+    $a: 'aaaaa';
+
+    @include assert-equal(helpers.logWithExtra($a, $block: true), true);
+  }
+}

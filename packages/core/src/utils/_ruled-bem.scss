@@ -15,9 +15,10 @@ $globalRules: ();
 $contentOnlyMarker: '@contentOnly';
 $blockBaseStyles: '@blockBaseStyles';
 $hasExplicitTrue: '@hasExplicitTrue';
+$isExplicitlyDisallowed: '@isExplicitlyDisallowed';
 
 /// HELPERS
-/// removes last item from list
+/// Removes last item from list
 @function pop-list($target) {
   $len: list.length($target);
   $copy: [];
@@ -31,7 +32,7 @@ $hasExplicitTrue: '@hasExplicitTrue';
   @return $copy;
 }
 
-// returns the key of first item in map that has a truthy value
+// Returns the key of the first item in map that has a truthy value
 @function get-map-key-with-value($target) {
   @if not $target {
     @return null;
@@ -70,7 +71,9 @@ $hasExplicitTrue: '@hasExplicitTrue';
   @if $content {
     $parentType: get-map-key-with-value($queueParent);
 
-    @if $parentType == 'block' and $level == 0 and is-block-content-allowed() == false {
+    ///  debug 'parentType: #{$parentType}, level: #{$level}, is-a: #{is-block-content-allowed()}';
+
+    @if $parentType == 'block' and $level == 1 and is-block-content-allowed() == false {
       /// debug 'SHOULD NOT RENDER!';
 
       $selector: null;
@@ -159,7 +162,15 @@ $hasExplicitTrue: '@hasExplicitTrue';
     @return null;
   }
 
+  /// debug "currentNestLevel: #{map.get($globalRules, 'currentNestLevel')}";
+  /// debug 'isFirstLevel:#{$isFirstLevel}, $rootSelector:#{$rootSelector}';
+
   @if $rootSelector and $isFirstLevel {
+    $void: add-nest-level(
+      $modifier: $modifier,
+      $element: $element,
+    );
+
     @return $contentOnlyMarker;
   }
 
@@ -223,13 +234,18 @@ $hasExplicitTrue: '@hasExplicitTrue';
   @if $listLength > 0 {
     $index: 0;
 
-    @each $level in $nesting {
-      $newSelector: map-to-selector($level);
-      $entitySeparator: get-entity-separator($parent, $level, if($rootSelector, '', $blockSelector));
+    @each $nestItem in $nesting {
+      $newSelector: map-to-selector($nestItem);
+      $entitySeparator: get-entity-separator(
+        $parent,
+        $nestItem,
+        if($index == 0, if($rootSelector, '', $blockSelector), $rootSelector or $blockSelector)
+      );
 
       /// debug 'c-r newSelector #{$newSelector}';
-      /// debug meta.inspect($level);
+      /// debug meta.inspect($nestItem);
 
+      // override only the current one
       @if $override and $index == $listLength - 1 {
         $newSelector: $override;
       }
@@ -239,7 +255,7 @@ $hasExplicitTrue: '@hasExplicitTrue';
       }
 
       $index: $index + 1;
-      $parent: $level;
+      $parent: $nestItem;
     }
   }
 
@@ -376,7 +392,7 @@ $hasExplicitTrue: '@hasExplicitTrue';
   $globalRules: map.set($globalRules, 'currentNesting', $current) !global;
   $globalRules: map.set($globalRules, 'currentNestLevel', list.length($current)) !global;
 
-  /// debug 'nest: #{get-selector()}';
+  /// debug "currentNestLevel: #{map.get($globalRules, 'currentNestLevel')}";
   @return $current;
 }
 
@@ -427,9 +443,16 @@ $hasExplicitTrue: '@hasExplicitTrue';
   $valueType: meta.type-of($value);
   $allAccepted: true;
   $explicitlySetTrue: false;
+  $isValueExplicitlyDisallowed: false;
+
+  /// debug 'valueType: #{$valueType}';
 
   @if $valueType == 'bool' {
     $allAccepted: $value;
+
+    @if not $value {
+      $isValueExplicitlyDisallowed: true;
+    }
   } @else if $valueType == 'string' {
     $returnValue: map.set($returnValue, $value, true);
     $allAccepted: false;
@@ -437,16 +460,12 @@ $hasExplicitTrue: '@hasExplicitTrue';
   } @else if $valueType == 'map' {
     $allAccepted: false;
 
-    @if $prefix {
-      @each $itemName, $itemValue in $value {
-        $returnValue: map.set($returnValue, '#{$prefix}#{$itemName}', $itemValue);
+    @each $itemName, $itemValue in $value {
+      $returnValue: map.set($returnValue, '#{$prefix}#{$itemName}', $itemValue);
 
-        @if $explicitlySetTrue == false and $itemValue == true {
-          $explicitlySetTrue: true;
-        }
+      @if $explicitlySetTrue == false and $itemValue == true {
+        $explicitlySetTrue: true;
       }
-    } @else {
-      $returnValue: $value;
     }
   }
 
@@ -454,6 +473,12 @@ $hasExplicitTrue: '@hasExplicitTrue';
 
   @if $explicitlySetTrue {
     $returnValue: map.set($returnValue, $hasExplicitTrue, true);
+  } @else {
+    /// debug 'NO EXPLICITS';
+  }
+
+  @if $isValueExplicitlyDisallowed {
+    $returnValue: map.set($returnValue, $isExplicitlyDisallowed, $isValueExplicitlyDisallowed);
   }
 
   /// debug 'rv #{$allAccepted}';
@@ -478,7 +503,7 @@ $hasExplicitTrue: '@hasExplicitTrue';
   $hasSpecificModifiers: false;
   $testContainer: map.get($args, 'testContainer');
 
-  @debug 'parent #{$parent}';
+  /// debug 'parent #{$parent}';
 
   @if $parent {
     $hasRoot: true;
@@ -486,8 +511,8 @@ $hasExplicitTrue: '@hasExplicitTrue';
     /// convert list to string
     $rootSelector: #{$parent};
 
-    @debug 'testContainer #{$testContainer}';
-    @debug 'rootSelector #{$rootSelector}';
+    /// debug 'testContainer #{$testContainer}';
+    /// debug 'rootSelector #{$rootSelector}';
 
     @if $testContainer and string.index($rootSelector, $testContainer) {
       $rootSelector: null;
@@ -499,6 +524,7 @@ $hasExplicitTrue: '@hasExplicitTrue';
   /// If elements == string, given, named element is included
   /// If elements == map, elements are used as it is.
   /// debug "el #{map.get($args, 'elements')}";
+  /// debug 'EL';
 
   $elements: value-to-map(map.get($args, 'elements'));
   $extras: value-to-map(map.get($args, 'extras'));
@@ -511,6 +537,8 @@ $hasExplicitTrue: '@hasExplicitTrue';
   $argModifiers: map.get($args, 'modifiers');
   $modifiers: value-to-map($argModifiers);
 
+  /// debug 'argModifiers #{$argModifiers}';
+
   @if meta.type-of($argModifiers) == 'map' {
     @each $modifierName, $modifierValue in $argModifiers {
       $modifiers: map.set($modifiers, $modifierName, value-to-map($modifierValue));
@@ -519,6 +547,12 @@ $hasExplicitTrue: '@hasExplicitTrue';
 
   @if map.get($modifiers, $hasExplicitTrue) {
     $elements: map.set($elements, $blockBaseStyles, false);
+
+    /// Might be correct
+    $elements: map.set($elements, 'all', false);
+
+    /// Might be correct
+    $elements: map.set($elements, $hasExplicitTrue, true);
   }
 
   $rules: (
@@ -568,7 +602,20 @@ $hasExplicitTrue: '@hasExplicitTrue';
   }
 
   $hasExplicitlyAllowedItems: map.get($map, $hasExplicitTrue);
+  $isValueExplicitlyDisallowed: map.get($map, $isExplicitlyDisallowed);
   $itemValue: map.get($map, $item);
+
+  /// debug '---is-value-allowed---';
+  /// debug 'item #{$item}';
+  /// debug 'hasExplicitlyAllowedItems #{$hasExplicitlyAllowedItems}';
+  /// debug 'itemValue #{$itemValue}';
+  /// debug 'allItemsAllowed #{$allItemsAllowed}';
+  /// debug 'isValueExplicitlyDisallowed #{$isValueExplicitlyDisallowed}';
+  /// debug '----';
+
+  @if $isValueExplicitlyDisallowed {
+    @return false;
+  }
 
   @if $itemValue or $allItemsAllowed {
     @return true;
@@ -641,6 +688,8 @@ $hasExplicitTrue: '@hasExplicitTrue';
   } @else {
     $elementIsAllowed: is-element-allowed($element);
 
+    ///  debug 'is element allowed? #{$element}=== #{$elementIsAllowed}';
+
     @if $currentModifier {
       @if not $modifierIsAllowed {
         ///  debug 'is element allowed? No. #{$currentModifier} is not allowed';
@@ -652,6 +701,10 @@ $hasExplicitTrue: '@hasExplicitTrue';
       @if not $elementIsAllowedInModifier {
         ///  debug 'is element allowed? No. #{$element} is not allowed in modifier #{$currentModifier}';
         @return false;
+      }
+
+      @if is-value-boolean($elementIsAllowedInModifier) and $elementIsAllowedInModifier {
+        @return true;
       }
     }
 

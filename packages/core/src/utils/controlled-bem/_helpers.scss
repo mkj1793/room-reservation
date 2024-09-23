@@ -1,0 +1,94 @@
+/* stylelint-disable scss/function-no-unknown */
+@use "sass:meta";
+@use "sass:map";
+@use "sass:list";
+
+@function pop-list($target) {
+  $len: list.length($target);
+  $copy: [];
+
+  @if $len > 1 {
+    @for $i from 1 through $len - 1 {
+      $copy: list.append($copy, list.nth($target, $i));
+    }
+  }
+
+  @return $copy;
+}
+
+// Returns the key of the first item in map that has a non-null value
+@function get-map-key-with-value($target) {
+  @if not $target {
+    @return null;
+  } @else {
+    @each $name, $value in $target {
+      /* stylelint-disable-next-line scss/at-if-no-null */
+      @if meta.type-of($value) != null {
+        @return $name;
+      }
+    }
+  }
+
+  @return null;
+}
+
+// Returns the (key,value) map of the first item in map that has a non-null value
+@function get-map-data-with-value($target) {
+  $keyWithValue: get-map-key-with-value();
+
+  @if not $keyWithValue {
+    @return null;
+  }
+
+  $value: map.get($target, $keyWithValue);
+
+  @return ('key': $keyWithValue, 'value': $value);
+}
+
+@function is-value-boolean($value) {
+  @return meta.type-of($value) == 'bool';
+}
+
+@function is-value-false($value) {
+  @return is-value-boolean($value) and $value == false;
+}
+
+@function argListToMap($args...) {
+  @return null;
+}
+
+@function log($args...) {
+  @debug '***** **** ****';
+
+  $map: meta.keywords($args);
+  $rules: (
+    'rule1': true,
+    'rule2': false,
+  );
+
+  @debug 'type-of:#{meta.type-of($args)}';
+  @debug 'inspect map:#{meta.inspect($map)}';
+  @debug 'block:#{map.get($map, "block")}';
+
+  $void: logWithExtra(
+    $rules: $rules,
+    $block2: 'block2',
+    $args...,
+  );
+
+  @return true;
+}
+
+@function logWithExtra($rules, $args2...) {
+  @debug '***** 2222 ****';
+
+  $map: meta.keywords($args2);
+
+  @debug 'len:#{list.length($args2)}';
+  @debug 'type-of 2:#{meta.type-of($args2)}';
+  @debug 'inspect args 2:#{meta.inspect($args2)}';
+  @debug 'inspect map 2:#{meta.inspect($map)}';
+  @debug 'block 2:#{map.get($map, "block2")}';
+  @debug 'inspect rules:#{meta.inspect($rules)}';
+  @return true;
+}

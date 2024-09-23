@@ -1,12 +1,52 @@
 # How css is created
 
-## "elements" in parameters
+## Parameters
 
-## "modifiers" in parameters
+### "elements"
 
-## "extras" in parameters
+Elements define what rules for elements should be outputted.
 
-## "all" in parameters
+#### The "base" element
+
+There is a special element named "base" which is for the base rules for block, modifiers and element.
+
+```css
+.block {
+  /// block base rules
+  color: #f00;
+
+  .block--modifier {
+    /// modifier base rules
+    background-color: #f00;
+    .block__element {
+      /// element base rules
+      padding: 0;
+    }
+  }
+}
+```
+
+To control the output of base rules, `@content("base")` should be used. There is no automatic way to pick base rules, so the css must be wrapped.
+
+Usually base is only used in the block level, because other entities are controlled with "elements" and "modifiers".
+
+#### Other elements
+
+Other elements can be named in any way.
+
+### Values
+
+All elements are outputted by default. See...
+
+### "modifiers"
+
+### "extras"
+
+### "all"
+
+### What about "content"?
+
+The argument for the `@contents($elementName)` is an element's name. Usually only "base" is used.
 
 By default, everything is outputted.
 "all" is changed to false if
@@ -17,6 +57,59 @@ By default, everything is outputted.
 - "extras" is false
 - "modifiers" is false
 - "elements" is false
+
+### Values
+
+Setting a parameter `false`, prohibits all its targets from the output.
+
+For example `elements:false` prohibits all elements.
+
+Setting a parameter `true` (default), allows all its targets.
+
+Setting a single target parameter `false`, prohibits that target from the output.
+
+For example `elements:("base":false)` prohibits "base" element.
+
+Setting a single target parameter `true`, prohibits all other targets from the output and allow only that.
+
+Setting multiple target parameters 'true', allows all those targets.
+
+#### Examples
+
+Let's say there is a following css-structure:
+
+```
+- block
+  - base content
+  - element: table
+  - element: button
+  - modifier: dark
+    - element: table
+    - element button
+  - modifier: light
+    - element: table
+    - element button
+
+```
+
+Parameters `("element":"base")` outputs
+
+```
+- block
+  - base content
+  - modifier: dark
+  - modifier: light
+
+```
+
+Parameters `("modifier":"dark")` outputs
+
+```
+- block
+  - modifier: dark
+    - element: table
+    - element button
+```
 
 ## If there is NO parent selector in the css ($globalRules.parent does not exists):
 

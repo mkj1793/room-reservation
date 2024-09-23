@@ -1,0 +1,94 @@
+/* stylelint-disable scss/function-no-unknown */
+@function is-entity-allowed($rules, $level) {
+  @return false;
+}
+
+@function is-content-only($rules, $level) {
+  @return false;
+}
+
+/// value can be boolean, string or a map
+///   /// Parse modifiers
+/// If value == true, all named entities are allowed
+/// If value == false, all named entities are excluded
+/// If value == string, only the given, named entity is allowed
+/// If value == map, named entities are picked from the map:
+///   If value = (name: string or name:true), only the given, named entity is allowed (multiple entities can be allowed)
+///   If value = (name:false), the given, named entity is disallowed
+@function value-to-map($value, $prefix: null) {
+  $returnValue: ();
+  $valueType: meta.type-of($value);
+  $allAccepted: true;
+  $explicitlySetTrue: false;
+  $isValueExplicitlyDisallowed: false;
+
+  /// debug 'valueType: #{$valueType}';
+
+  @if $valueType == 'bool' {
+    $allAccepted: $value;
+
+    @if not $value {
+      $isValueExplicitlyDisallowed: true;
+    }
+  } @else if $valueType == 'string' {
+    $returnValue: map.set($returnValue, $value, true);
+    $allAccepted: false;
+    $explicitlySetTrue: true;
+  } @else if $valueType == 'map' {
+    $allAccepted: false;
+
+    @each $itemName, $itemValue in $value {
+      $returnValue: map.set($returnValue, '#{$prefix}#{$itemName}', $itemValue);
+
+      @if $explicitlySetTrue == false and $itemValue == true {
+        $explicitlySetTrue: true;
+      }
+    }
+  }
+
+  $returnValue: map.set($returnValue, 'all', $allAccepted);
+
+  @if $explicitlySetTrue {
+    $returnValue: map.set($returnValue, $hasExplicitTrue, true);
+  } @else {
+    /// debug 'NO EXPLICITS';
+  }
+
+  @if $isValueExplicitlyDisallowed {
+    $returnValue: map.set($returnValue, $isExplicitlyDisallowed, $isValueExplicitlyDisallowed);
+  }
+
+  /// debug 'rv #{$allAccepted}';
+  @return $returnValue;
+}
+
+@function rules-to-map($args, $target) {
+  $elements: value-to-map(map.get($args, 'elements'));
+  $extras: value-to-map(map.get($args, 'extras'));
+  $argModifiers: map.get($args, 'modifiers');
+  $modifiers: value-to-map($argModifiers);
+
+  /// debug 'argModifiers #{$argModifiers}';
+
+  @if meta.type-of($argModifiers) == 'map' {
+    @each $modifierName, $modifierValue in $argModifiers {
+      $modifiers: map.set($modifiers, $modifierName, value-to-map($modifierValue));
+    }
+  }
+
+  @if map.get($modifiers, $hasExplicitTrue) {
+    $elements: map.set($elements, $blockBaseStyles, false);
+
+    /// Might be correct
+    $elements: map.set($elements, 'all', false);
+
+    /// Might be correct
+    $elements: map.set($elements, $hasExplicitTrue, true);
+  }
+
+  $target: map.set($target, 'modifiers', $modifiers);
+  $target: map.set($target, 'elements', $elements);
+  $target: map.set($target, 'extras', $extras);
+
+  @return $target;
+}

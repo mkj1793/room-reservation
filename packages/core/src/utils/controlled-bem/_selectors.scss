@@ -1,0 +1,9 @@
+@function create-entity-selector($block: null) {
+  @return '';
+}
+
+@function create-level-selector($rules, $level) {
+  $parent: map.get($level, 'parent');
+
+  @return null;
+}

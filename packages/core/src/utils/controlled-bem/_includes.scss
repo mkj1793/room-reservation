@@ -1,0 +1,74 @@
+/* stylelint-disable scss/function-no-unknown */
+@use './levels.scss' as levels;
+@use './rules.scss' as rules;
+
+$globalRules: null;
+
+@function init-controlled-bem($args) {
+  $rootSelector: null;
+  $parent: &;
+  $rules: (
+    'levels': levels.init-levels(),
+    'rootSelector': $rootSelector,
+    'elements': (),
+    'modifiers': (),
+    'extras': (),
+  );
+  $rules: rules.rules-to-map($args, $rules);
+  $globalRules: $rules !global;
+
+  @return $rules;
+}
+
+/// for future use
+@function end-controlled-bem() {
+  @return null;
+}
+
+@mixin block() {
+  $processData: start-processing(
+    $block: true,
+  );
+
+  @include handle-output($processData) {
+    @content;
+  }
+
+  $void: stop-processing($processData);
+}
+
+@mixin content($element) {
+  $processData: start-processing(
+    $content: $element,
+  );
+
+  @include handle-output($processData) {
+    @content;
+  }
+
+  $void: stop-processing($processData);
+}
+
+@mixin modifier($modifier) {
+  $processData: start-processing(
+    $modifier: $modifier,
+  );
+
+  @include handle-output($processData) {
+    @content;
+  }
+
+  $void: stop-processing($processData);
+}
+
+@mixin element($element) {
+  $processData: start-processing(
+    $element: $element,
+  );
+
+  @include handle-output($processData) {
+    @content;
+  }
+
+  $void: stop-processing($processData);
+}

@@ -1,0 +1,78 @@
+/* stylelint-disable scss/function-no-unknown */
+@use './helpers.scss' as helpers;
+@use './rules.scss' as rules;
+@use './selectors.scss' as selectors;
+
+/// block: depth:0, selector: .hds-block, parent: null,
+///   base content:         depth:0 or 1?,  parent: block     selector: '',                             contentOnly:true,
+///   modifier:             depth:1,        parent: block     selector: .hds-block--modifier,
+///     base content:       depth:1 or 2?,  parent: modifier  selector: ''r,                            contentOnly:true,
+///     element table:      depth:2,        parent: modifier  selector: .hds-block--modifier__element
+///   element:              depth:1,        parent: block     selector: .hds-block__element
+///     base content:       depth:1 or 2?,  parent: element   selector: '',                             contentOnly:true,
+
+@function init-levels() {
+  $levels: [];
+
+  @return $levels;
+}
+
+@function create-level-data($parent, $block: null, $modifier: null, $element: null, $content: null, $custom: null) {
+  $parent: map.get($level, 'parent');
+  $parentDepth: if($parent, map.get($parent, 'depth'), -1);
+  $parentIsContentOnly: if($parent, map.get($parent, 'contentOnly'), false);
+  $depth: if($parentIsContentOnly, $parentDepth, $parentDepth + 1);
+  $levelProps: helpers.get-map-data-with-value(
+    $block: null,
+    $modifier: null,
+    $element: null,
+    $content: null,
+    $custom: null,
+  );
+
+  @if not $levelProps {
+    @return (depth: -1, $type: null, $name: null, $parent: null);
+  }
+
+  $type: map.get($levelProps, 'key');
+  $name: map.get($levelProps, 'value');
+
+  @return ('parent': $parent, 'type': $type, 'depth': $depth, 'name': $name);
+}
+
+@function append-level-rules($rules, $level) {
+  $parent: map.get($level, 'parent');
+  $parentAllowed: if($parent, map.get($parent, 'isAllowed'), true);
+  $isAllowed: $parentAllowed and checkers.is-entity-allowed($rules, $level);
+  $contentOnly: $isAllowed and checkers.is-content-only($rules, $level);
+  $selector: $isAllowed and not $contentOnly and selectors.create-level-selector($rules, $level);
+
+  ///
+  $level: map.set($level, 'isAllowed', $isAllowed);
+  $level: map.set($level, 'selector', $selector);
+  $level: map.set($level, 'contentOnly', $contentOnly);
+
+  @return $level;
+}
+
+@function create-level($rules, $parent, $block: null, $modifier: null, $element: null, $content: null, $custom: null) {
+  $data: create-level-data();
+
+  @if not map.get($data, 'type') {
+    @return $data;
+  }
+
+  $level: append-level-rules($rules, $level);
+}
+
+@function add-tracking-level($args...) {
+  @return false;
+}
+
+@function pop-tracking-level() {
+  @return false;
+}
+
+@function get-current-tracking-level() {
+  @return false;
+}
