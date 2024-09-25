@@ -1,6 +1,17 @@
 import React, { ReactElement, ReactNode } from 'react';
 
-import { SelectData, Group, SelectProps, Option, OptionInProps, SelectMetaData, GroupInProps } from './types';
+import {
+  SelectData,
+  Group,
+  SelectProps,
+  Option,
+  OptionInProps,
+  SelectMetaData,
+  GroupInProps,
+  FilterFunction,
+  ScreenReaderNotification,
+  SelectDataHandlers,
+} from './types';
 import { getChildrenAsArray } from '../../utils/getChildren';
 import { ChangeEvent } from '../dataProvider/DataContext';
 import { eventTypes } from './events';
@@ -199,7 +210,8 @@ export function propsToGroups(props: Pick<SelectProps, 'groups' | 'options'>): S
   }
   if (props.groups) {
     return (props.groups as Group[]).map((group: Group) => {
-      const hasLabelOptionAlready = !!group.options[0].isGroupLabel;
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      const hasLabelOptionAlready = !!getGroupLabelOption(group);
       const groupOptions = group.options.map(validateOption) as Option[];
       if (hasLabelOptionAlready) {
         return {
@@ -214,11 +226,43 @@ export function propsToGroups(props: Pick<SelectProps, 'groups' | 'options'>): S
     });
   }
 
+  if (props.options) {
+    const option = props.options[0];
+    if (option && (option as OptionInProps).isGroupLabel) {
+      return [props] as Group[];
+    }
+  }
+
   return [
     {
       options: [createGroupLabel(''), ...(props.options || []).map(validateOption)],
     },
   ];
+}
+
+export function defaultFilter(option: Option, filterStr: string) {
+  return option.label.toLowerCase().indexOf(filterStr.toLowerCase()) > -1;
+}
+
+export function filterOptions(groups: SelectData['groups'], filterStr: string, filterFunc: FilterFunction) {
+  const newGroupsWithFilteredOptions = iterateAndCopyGroup(groups, (option) => {
+    if (option.isGroupLabel) {
+      return { ...option };
+    }
+    return { ...option, visible: !filterStr || filterFunc(option, filterStr) };
+  });
+
+  // check if group label should be visible....
+  newGroupsWithFilteredOptions.forEach((group) => {
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    const groupLabel = getGroupLabelOption(group);
+    if (!groupLabel) {
+      return;
+    }
+    groupLabel.visible = !!groupLabel.label && group.options.findIndex((opt) => !opt.isGroupLabel && opt.visible) > -1;
+  });
+
+  return newGroupsWithFilteredOptions;
 }
 
 export function childrenToGroups(children: SelectProps['children']): SelectData['groups'] | undefined {
@@ -252,6 +296,30 @@ export function childrenToGroups(children: SelectProps['children']): SelectData[
   return [{ options: [createGroupLabel(''), ...childArray.map(optionElementToOption)] }];
 }
 
+export function mergeSearchResultsToCurrent(
+  props: Pick<SelectProps, 'groups' | 'options'>,
+  currentGroups: SelectData['groups'],
+): SelectData['groups'] {
+  const newData = propsToGroups(props) || [];
+  const newOptions = getAllOptions(newData);
+  const currentOptionsWithoutMatches = getSelectedOptions(currentGroups).filter((option) => {
+    const sameInNewOptionsIndex = newOptions.findIndex((newOption) => {
+      return newOption.value === option.value;
+    });
+    if (sameInNewOptionsIndex > -1) {
+      newOptions[sameInNewOptionsIndex].selected = true;
+      return false;
+    }
+    return true;
+  });
+
+  const currentHiddenOptionsInAGroup = currentOptionsWithoutMatches.length
+    ? [{ options: currentOptionsWithoutMatches.map((opt) => ({ ...opt, visible: false })) } as Group]
+    : [];
+
+  return [...currentHiddenOptionsInAGroup, ...newData];
+}
+
 export function createSelectedOptionsList(currentSelections: Option[], groups: SelectData['groups']) {
   const selections = getSelectedOptions(groups);
   const selectionsAsValues = new Set(selections.map((opt) => opt.value));
@@ -270,6 +338,8 @@ export function getElementIds(containerId: string): SelectMetaData['elementIds']
     label: `${containerId}-label`,
     selectionsAndListsContainer: `${containerId}-sl-container`,
     tagList: `${containerId}-tag-list`,
+    searchOrFilterInput: `${containerId}-input-element`,
+    searchOrFilterInputLabel: `${containerId}-input-element-label`,
     clearAllButton: `${containerId}-clear-all-button`,
     showAllButton: `${containerId}-show-all-button`,
   };
@@ -290,4 +360,59 @@ export function countVisibleOptions(groups: SelectData['groups']): number {
 export function getGroupLabelOption(group: Group): Option | undefined {
   const firstOption = group.options[0];
   return firstOption && firstOption.isGroupLabel ? firstOption : undefined;
+}
+
+export function createScreenReaderNotification(type: string, content: string, delay = 0): ScreenReaderNotification {
+  return {
+    type,
+    content,
+    delay,
+    showTime: 0,
+    addTime: Date.now(),
+  };
+}
+
+/**
+ *
+ * @param notification
+ * @param dataHandlers
+ * @returns Returns true, if notification was added
+ */
+export function addOrUpdateScreenReaderNotificationByType(
+  notification: ScreenReaderNotification,
+  dataHandlers: SelectDataHandlers,
+) {
+  const { screenReaderNotifications } = dataHandlers.getMetaData();
+  const indexOfSameType = screenReaderNotifications.findIndex((n) => n.type === notification.type);
+  if (indexOfSameType > -1) {
+    const updatedList = [...screenReaderNotifications];
+    const prev = updatedList[indexOfSameType];
+    if (prev.content === notification.content) {
+      return false;
+    }
+    updatedList[indexOfSameType] = notification;
+    dataHandlers.updateMetaData({ screenReaderNotifications: updatedList });
+    return false;
+  }
+  const updatedList = [...screenReaderNotifications, notification];
+  dataHandlers.updateMetaData({ screenReaderNotifications: updatedList });
+  return true;
+}
+
+export function removeScreenReaderNotification(
+  target: Partial<ScreenReaderNotification>,
+  dataHandlers: SelectDataHandlers,
+) {
+  const { screenReaderNotifications } = dataHandlers.getMetaData();
+  const indexOfMatch = screenReaderNotifications.findIndex((n) => {
+    const hasTypeMatch = !target.type || n.type === target.type;
+    const hasContentMatch = !target.content || n.content === target.content;
+    return hasTypeMatch && hasContentMatch;
+  });
+  if (indexOfMatch > -1) {
+    screenReaderNotifications.splice(indexOfMatch, 1);
+    dataHandlers.updateMetaData({ screenReaderNotifications });
+    return true;
+  }
+  return false;
 }

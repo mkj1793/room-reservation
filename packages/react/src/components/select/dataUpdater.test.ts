@@ -1,4 +1,7 @@
+import { waitFor } from '@testing-library/react';
+
 import { getLastMockCallArgs } from '../../utils/testHelpers';
+import { createTimedPromise } from '../login/testUtils/timerTestUtil';
 import { changeHandler } from './dataUpdater';
 import { eventIds, eventTypes } from './events';
 // eslint-disable-next-line jest/no-mocks-import
@@ -11,11 +14,17 @@ import {
   updateMockData,
   getCurrentMockData,
   getCurrentMockMetaData,
+  createGroup,
+  getTriggeredEvents,
 } from './hooks/__mocks__/useSelectDataHandlers';
 import { getTextKey } from './texts';
 import {
+  FilterFunction,
   Group,
+  Option,
   OptionInProps,
+  SearchFunction,
+  SearchResult,
   SelectData,
   SelectDataHandlers,
   SelectMetaData,
@@ -89,7 +98,7 @@ describe('dataUpdater', () => {
 
   const mockDateNow = (time = 0) => {
     dateNowTime = time;
-    jest.spyOn(global.Date, 'now').mockImplementation(() => dateNowTime);
+    dateNowSpy = jest.spyOn(global.Date, 'now').mockImplementation(() => dateNowTime);
   };
 
   let dataHandlers: SelectDataHandlers;
@@ -173,6 +182,19 @@ describe('dataUpdater', () => {
       expect(didUpdate).toBeFalsy();
       expect(getDataUpdates()).toHaveLength(updateCount);
     });
+    it('if a tag is clicked it is removed and a screen reader notification is added', () => {
+      updateMockData({
+        ...createDataWithSelectedOptions({ totalOptionsCount: 3, selectedOptionsCount: 3 }),
+        open: true,
+        multiSelect: true,
+      });
+      const options = getAllOptionsFromData();
+
+      expect(getCurrentMockMetaData().screenReaderNotifications).toHaveLength(0);
+      changeHandler({ id: eventIds.tag, type: eventTypes.click, payload: { value: options[1] } }, dataHandlers);
+
+      expect(getMetaDataOfLastMetaDataUpdate().screenReaderNotifications).toHaveLength(1);
+    });
   });
   describe('group label click events', () => {
     it('sets all options selected when not all are selected and does not close the menu', () => {
@@ -180,9 +202,10 @@ describe('dataUpdater', () => {
         ...createDataWithSelectedOptions({ totalOptionsCount: 3, selectedOptionsCount: 0, label: 'Group 1' }),
         open: true,
       });
-      // select an group label
+      // select a group label
       const { didUpdate } = selectOptionByIndex(0);
       const updatedOptions = getAllOptionsFromLastUpdate();
+      expect(updatedOptions).toHaveLength(4);
       expect(didUpdate).toBeTruthy();
       expect(updatedOptions.filter((opt) => !opt.selected)).toHaveLength(0);
       expect(getLastOpenUpdateFromEvents()).toBeNull();
@@ -403,6 +426,143 @@ describe('dataUpdater', () => {
       // unselect by clicking the selected item
       selectOptionByIndex(3);
       expect(getSelectedOptionsInMetaData()).toHaveLength(0);
+    });
+  });
+  describe('filter function is called once per each option', () => {
+    let acceptedLabels: string[] = [];
+    const filterFunction: FilterFunction = (option) => {
+      return acceptedLabels.includes(option.label);
+    };
+    const filterTracker = jest.fn();
+
+    const resetFilter = (options: Option[]) => {
+      filterTracker.mockReset();
+      filterTracker.mockImplementation(filterFunction);
+      acceptedLabels = options.map((opt) => opt.label);
+    };
+
+    beforeEach(() => {
+      updateMockData({
+        ...createDataWithSelectedOptions({ totalOptionsCount: 10, selectedOptionsCount: 0 }),
+        filterFunction: filterTracker,
+      });
+    });
+    it('the value of "filter" is passed to the filter function with each option', () => {
+      const acceptedOptions = getAllOptionsFromData().filter((opt, index) => index > 7);
+      resetFilter(acceptedOptions);
+      changeHandler({ id: eventIds.filter, type: eventTypes.change, payload: { value: 'filterValue' } }, dataHandlers);
+      const updatedMetaData = getCurrentMockMetaData();
+      expect(updatedMetaData.filter).toBe('filterValue');
+      expect(filterTracker).toHaveBeenCalledTimes(10);
+      expect(getLastMockCallArgs(filterTracker)[1]).toBe('filterValue');
+    });
+    it('Options that do not match filter are hidden, matching options not. Filtering with empty value, resets visibility', () => {
+      const filterer = (index: number) => index === 4 || index === 9;
+      const acceptedOptions = getAllOptionsFromData().filter((opt, index) => filterer(index));
+      resetFilter(acceptedOptions);
+      changeHandler({ id: eventIds.filter, type: eventTypes.change, payload: { value: 'any' } }, dataHandlers);
+      getAllOptionsFromData().forEach((opt) => {
+        // group labels are not filtered
+        if (opt.isGroupLabel) {
+          return;
+        }
+        expect(opt.visible).toBe(filterFunction(opt, ''));
+      });
+      changeHandler({ id: eventIds.filter, type: eventTypes.change, payload: { value: '' } }, dataHandlers);
+
+      getAllOptionsFromData().forEach((opt) => {
+        // group item without label is always hidden
+        if (opt.isGroupLabel) {
+          return;
+        }
+        expect(opt.visible).toBeTruthy();
+      });
+    });
+    it('onChange function is not called', () => {
+      expect(getOnChangeMock()).toHaveBeenCalledTimes(0);
+      const filteredOpts = getAllOptionsFromData();
+      resetFilter(filteredOpts);
+      changeHandler({ id: eventIds.filter, type: eventTypes.change, payload: { value: 'filterValue' } }, dataHandlers);
+      expect(getOnChangeMock()).toHaveBeenCalledTimes(0);
+    });
+  });
+  describe('onSearch is called when search changes', () => {
+    let pendingPromise: Promise<SearchResult>;
+    let selectedItems: Option[] = [];
+    const searchTracker = jest.fn();
+    const onSearch: SearchFunction = async (searchValue, selectedOptions) => {
+      searchTracker(searchValue, selectedOptions);
+      return pendingPromise;
+    };
+
+    const resetSearch = (returnValue: SearchResult | Error) => {
+      searchTracker.mockReset();
+      pendingPromise = createTimedPromise(returnValue, 600) as Promise<SearchResult>;
+    };
+
+    beforeEach(() => {
+      updateMockData({
+        ...createDataWithSelectedOptions({ totalOptionsCount: 10, selectedOptionsCount: 5 }),
+        onSearch,
+      });
+      // existing items will be hidden when search results are merged.
+      selectedItems = getSelectedOptions(getCurrentMockData().groups as Group[]).map((opt) => {
+        return {
+          ...opt,
+          visible: false,
+        };
+      });
+    });
+    const searchValue = 'searchValue';
+    const triggerSearchAndWaitForResult = async () => {
+      changeHandler({ id: eventIds.search, type: eventTypes.change, payload: { value: searchValue } }, dataHandlers);
+      const updatedMetaData = getCurrentMockMetaData();
+      expect(updatedMetaData.search).toBe(searchValue);
+      expect(updatedMetaData.isSearching).toBeTruthy();
+      // search is debounced so must wait for it...
+      await waitFor(() => {
+        expect(searchTracker).toHaveBeenCalledTimes(1);
+      });
+      await pendingPromise.catch(() => {
+        // have to catch error
+      });
+      await waitFor(() => {
+        expect(getTriggeredEvents()).toHaveLength(1);
+      });
+    };
+
+    it('triggering a search change event will call the onSearch', async () => {
+      const searchResults = [createGroup({ label: 'Search results', totalOptionsCount: 20 })];
+      resetSearch({ groups: searchResults });
+      await triggerSearchAndWaitForResult();
+
+      const events = getTriggeredEvents();
+      const successEvent = events[events.length - 1];
+      expect(successEvent.type).toBe(eventTypes.success);
+      expect(successEvent.id).toBe(eventIds.searchResult);
+
+      expect(getCurrentMockMetaData().isSearching).toBeFalsy();
+      expect(getAllOptionsFromData()).toMatchObject([...selectedItems, ...getAllOptions(searchResults, false)]);
+    });
+    it('failing search is handled. Existing selections are kept.', async () => {
+      resetSearch(new Error('UPS'));
+      await triggerSearchAndWaitForResult();
+      const events = getTriggeredEvents();
+      const errorEvent = events[events.length - 1];
+      expect(errorEvent.type).toBe(eventTypes.error);
+      expect(errorEvent.id).toBe(eventIds.searchResult);
+
+      expect(getCurrentMockMetaData().isSearching).toBeFalsy();
+      expect(getAllOptionsFromData()).toMatchObject(selectedItems);
+    });
+
+    it('onChange function is not called', async () => {
+      expect(getOnChangeMock()).toHaveBeenCalledTimes(0);
+      const result = createGroup({ label: 'Search results' });
+      resetSearch({ groups: [result] });
+      await triggerSearchAndWaitForResult();
+      expect(getOnChangeMock()).toHaveBeenCalledTimes(0);
+      expect(getCurrentMockMetaData().isSearching).toBeFalsy();
     });
   });
 });
