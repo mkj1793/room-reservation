@@ -76,3 +76,7 @@
 @function get-current-tracking-level() {
   @return false;
 }
+
+@function get-closest($type) {
+  @return false;
+}

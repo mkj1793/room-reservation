@@ -2,12 +2,18 @@
 @use 'sass-true' as *;
 @use './helpers' as helpers;
 
-@include describe('log') {
-  @include it('remove this') {
-    @include assert-equal(helpers.log($block: 'blockName', $elem: 'elem'), true);
+@include describe('_helpers.scss') {
+  @include it('can-value-be-falsy') {
+    @include assert-equal(helpers.can-value-be-falsy(false), true);
+    @include assert-equal(helpers.can-value-be-falsy(''), true);
+    @include assert-equal(helpers.can-value-be-falsy(null), true);
+    @include assert-equal(helpers.can-value-be-falsy(0), true);
 
-    $a: 'aaaaa';
-
-    @include assert-equal(helpers.logWithExtra($a, $block: true), true);
+    // non-falsy:
+    @include assert-equal(helpers.can-value-be-falsy(1), false);
+    @include assert-equal(helpers.can-value-be-falsy(' '), false);
+    @include assert-equal(helpers.can-value-be-falsy(()), false);
+    @include assert-equal(helpers.can-value-be-falsy([]), false);
+    @include assert-equal(helpers.can-value-be-falsy(true), false);
   }
 }

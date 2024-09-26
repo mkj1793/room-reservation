@@ -49,46 +49,33 @@
   @return meta.type-of($value) == 'bool';
 }
 
+@function is-value-null($value) {
+  @return meta.type-of($value) == 'null';
+}
+
+@function is-value-map($value) {
+  @return meta.type-of($value) == 'map';
+}
+
 @function is-value-false($value) {
   @return is-value-boolean($value) and $value == false;
 }
 
-@function argListToMap($args...) {
-  @return null;
+@function is-value-true($value) {
+  @return is-value-boolean($value) and $value == true;
 }
 
-@function log($args...) {
-  @debug '***** **** ****';
-
-  $map: meta.keywords($args);
-  $rules: (
-    'rule1': true,
-    'rule2': false,
-  );
-
-  @debug 'type-of:#{meta.type-of($args)}';
-  @debug 'inspect map:#{meta.inspect($map)}';
-  @debug 'block:#{map.get($map, "block")}';
-
-  $void: logWithExtra(
-    $rules: $rules,
-    $block2: 'block2',
-    $args...,
-  );
-
-  @return true;
+/// this is intentionally named like this so it is not confused with is-value-false
+@function can-value-be-falsy($value) {
+  @return not $value or $value == '' or $value == 0;
 }
 
-@function logWithExtra($rules, $args2...) {
-  @debug '***** 2222 ****';
+/// this is intentionally named like this so it is not confused with is-value-true
+@function can-value-be-truthy($value) {
+  @return can-value-be-falsy($value) != true;
+}
 
-  $map: meta.keywords($args2);
-
-  @debug 'len:#{list.length($args2)}';
-  @debug 'type-of 2:#{meta.type-of($args2)}';
-  @debug 'inspect args 2:#{meta.inspect($args2)}';
-  @debug 'inspect map 2:#{meta.inspect($map)}';
-  @debug 'block 2:#{map.get($map, "block2")}';
-  @debug 'inspect rules:#{meta.inspect($rules)}';
-  @return true;
+/// empty () do not have type-of map, it is a list
+@function create-empty-map() {
+  @return map.merge((), ());
 }

@@ -1,0 +1,438 @@
+/* stylelint-disable scss/function-no-unknown */
+@use 'sass-true' as *;
+@use "sass:map";
+@use "sass:meta";
+@use './globals' as *;
+@use './rules' as rules;
+@use './helpers' as helpers;
+@use './test-helpers' as testHelpers;
+
+$defaultMap: (
+  'truthy': true,
+  'falsy': false,
+  'nully': null,
+  'stringy': 'stringValue',
+);
+
+@include describe('_rules.scss') {
+  @include it('get-parsed-map-value') {
+    $mapWithMap: map.merge(
+      $defaultMap,
+      (
+        'mappy': $defaultMap,
+      )
+    );
+
+    @include assert-equal(rules.get-parsed-map-value($defaultMap, 'truthy'), true);
+    @include assert-equal(rules.get-parsed-map-value($defaultMap, 'falsy'), false);
+    @include assert-equal(rules.get-parsed-map-value($defaultMap, 'nully'), null);
+    @include assert-equal(rules.get-parsed-map-value($defaultMap, 'non-existant'), null);
+    @include assert-equal(rules.get-parsed-map-value($defaultMap, 'stringy'), 'stringValue');
+    @include assert-equal(rules.get-parsed-map-value($mapWithMap, 'mappy'), $defaultMap);
+  }
+
+  /// rule map has $ALL_ALLOWED and $HAS_EXPLICIT_TRUE guiding value definitions
+  @include it('get-rule-map-value and is-rule-allowed') {
+    $valueMap: map.merge(
+      $defaultMap,
+      (
+        'mappy': $defaultMap,
+        $ALL_ALLOWED: false,
+        $HAS_EXPLICIT_TRUE: false,
+      )
+    );
+    $mapWithAllAllowed: map.merge(
+      $valueMap,
+      (
+        $ALL_ALLOWED: true,
+      )
+    );
+    $mapWithExplicitTrue: map.merge(
+      $valueMap,
+      (
+        $HAS_EXPLICIT_TRUE: true,
+      )
+    );
+
+    @include assert-equal(rules.get-rule-map-value($valueMap, 'truthy'), true);
+    @include assert-equal(rules.get-rule-map-value($valueMap, 'falsy'), false);
+    @include assert-equal(rules.get-rule-map-value($valueMap, 'nully'), null);
+    @include assert-equal(rules.get-rule-map-value($valueMap, 'non-existant'), null);
+    @include assert-equal(rules.get-rule-map-value($valueMap, 'stringy'), 'stringValue');
+    @include assert-equal(rules.get-rule-map-value($valueMap, 'mappy'), $defaultMap);
+
+    /// is-rule-allowed
+    @include assert-equal(rules.is-rule-allowed($valueMap, 'truthy'), true);
+    @include assert-equal(rules.is-rule-allowed($valueMap, 'falsy'), false);
+    @include assert-equal(rules.is-rule-allowed($valueMap, 'nully'), false);
+    @include assert-equal(rules.is-rule-allowed($valueMap, 'non-existant'), false);
+    @include assert-equal(rules.is-rule-allowed($valueMap, 'stringy'), true);
+    @include assert-equal(rules.is-rule-allowed($valueMap, 'mappy'), true);
+
+    // with ALL_ALLOWED, all non-existing values are true
+    @include assert-equal(rules.get-rule-map-value($mapWithAllAllowed, 'truthy'), true);
+    @include assert-equal(rules.get-rule-map-value($mapWithAllAllowed, 'falsy'), false);
+    @include assert-equal(rules.get-rule-map-value($mapWithAllAllowed, 'nully'), true);
+    @include assert-equal(rules.get-rule-map-value($mapWithAllAllowed, 'non-existant'), true);
+    @include assert-equal(rules.get-rule-map-value($mapWithAllAllowed, 'stringy'), 'stringValue');
+    @include assert-equal(rules.get-rule-map-value($mapWithAllAllowed, 'mappy'), $defaultMap);
+
+    /// is-rule-allowed
+    @include assert-equal(rules.is-rule-allowed($mapWithAllAllowed, 'truthy'), true);
+    @include assert-equal(rules.is-rule-allowed($mapWithAllAllowed, 'falsy'), false);
+    @include assert-equal(rules.is-rule-allowed($mapWithAllAllowed, 'nully'), true);
+    @include assert-equal(rules.is-rule-allowed($mapWithAllAllowed, 'non-existant'), true);
+    @include assert-equal(rules.is-rule-allowed($mapWithAllAllowed, 'stringy'), true);
+    @include assert-equal(rules.is-rule-allowed($mapWithAllAllowed, 'mappy'), true);
+
+    // with HAS_EXPLICIT_TRUE, all non true values are falsy
+    @include assert-equal(rules.get-rule-map-value($mapWithExplicitTrue, 'truthy'), true);
+    @include assert-equal(rules.get-rule-map-value($mapWithExplicitTrue, 'falsy'), false);
+    @include assert-equal(rules.get-rule-map-value($mapWithExplicitTrue, 'nully'), false);
+    @include assert-equal(rules.get-rule-map-value($mapWithExplicitTrue, 'non-existant'), false);
+    @include assert-equal(rules.get-rule-map-value($mapWithExplicitTrue, 'stringy'), 'stringValue');
+    @include assert-equal(rules.get-rule-map-value($mapWithExplicitTrue, 'mappy'), $defaultMap);
+
+    /// is-rule-allowed
+    @include assert-equal(rules.is-rule-allowed($mapWithExplicitTrue, 'truthy'), true);
+    @include assert-equal(rules.is-rule-allowed($mapWithExplicitTrue, 'falsy'), false);
+    @include assert-equal(rules.is-rule-allowed($mapWithExplicitTrue, 'nully'), false);
+    @include assert-equal(rules.is-rule-allowed($mapWithExplicitTrue, 'non-existant'), false);
+    @include assert-equal(rules.is-rule-allowed($mapWithExplicitTrue, 'stringy'), true);
+    @include assert-equal(rules.is-rule-allowed($mapWithExplicitTrue, 'mappy'), true);
+  }
+
+  @include it('is-name-within-value') {
+    /// when value is "true", all calls return true when secord argument is a string
+    @include assert-equal(rules.is-name-within-value(true, 'any'), true);
+    @include assert-equal(rules.is-name-within-value(true, ''), true);
+
+    /// when value is "true", all calls return true when secord argument is NOT a string
+    @include assert-equal(rules.is-name-within-value(true, null), false);
+    @include assert-equal(rules.is-name-within-value(true, false), false);
+    @include assert-equal(rules.is-name-within-value(true, true), false);
+    @include assert-equal(rules.is-name-within-value(true, true), false);
+
+    /// when value is "false", all calls return false
+    @include assert-equal(rules.is-name-within-value(false, 'any'), false);
+    @include assert-equal(rules.is-name-within-value(false, null), false);
+    @include assert-equal(rules.is-name-within-value(false, false), false);
+    @include assert-equal(rules.is-name-within-value(false, true), false);
+
+    /// when value is "null", all calls return false
+    @include assert-equal(rules.is-name-within-value(null, 'any'), false);
+    @include assert-equal(rules.is-name-within-value(null, null), false);
+    @include assert-equal(rules.is-name-within-value(null, false), false);
+    @include assert-equal(rules.is-name-within-value(null, true), false);
+
+    /// when value is "string", exact matches calls return true
+    @include assert-equal(rules.is-name-within-value('allowed', 'allowed'), true);
+    @include assert-equal(rules.is-name-within-value('allowed', 'allowed2'), false);
+    @include assert-equal(rules.is-name-within-value('allowed', ''), false);
+    @include assert-equal(rules.is-name-within-value('allowed', true), false);
+    @include assert-equal(rules.is-name-within-value('allowed', null), false);
+
+    /// when value is a map, this function is called again with the value from map
+    @include assert-equal(
+      rules.is-name-within-value(
+        (
+          'allowed': true,
+        ),
+        'allowed'
+      ),
+      true
+    );
+    @include assert-equal(
+      rules.is-name-within-value(
+        (
+          'allowed': 'allowed',
+        ),
+        'allowed'
+      ),
+      true
+    );
+    @include assert-equal(
+      rules.is-name-within-value(
+        (
+          'allowed': false,
+        ),
+        'allowed'
+      ),
+      false
+    );
+    @include assert-equal(
+      rules.is-name-within-value(
+        (
+          'allowed': null,
+        ),
+        'allowed'
+      ),
+      false
+    );
+    @include assert-equal(
+      rules.is-name-within-value(
+        (
+          'allowed2': true,
+        ),
+        'allowed'
+      ),
+      false
+    );
+    @include assert-equal(rules.is-name-within-value((), 'allowed'), false);
+  }
+
+  @include it('is-child-rule-allowed') {
+    $map: (
+      'allowed': true,
+      'disallowed': false,
+      'childMap': (
+        'childAllowed': true,
+        'childDisallowed': false,
+      ),
+    );
+
+    @include assert-equal(rules.is-child-rule-allowed($map, 'allowed', 'all-are-allowed'), true);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'disallowed', 'childAllowed'), false);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'not-found', 'not-found-either'), false);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'childMap', 'not-found'), false);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'childMap', 'childAllowed'), true);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'childMap', 'childDisallowed'), false);
+
+    $mapWithAllAllowed: map.merge(
+      $map,
+      (
+        $ALL_ALLOWED: true,
+        'allAllowedChildMap': (
+          $ALL_ALLOWED: true,
+          'childAllowed': true,
+          'childDisallowed': false,
+        ),
+      )
+    );
+
+    @include assert-equal(rules.is-child-rule-allowed($mapWithAllAllowed, 'not-found', 'not-found-either'), true);
+    @include assert-equal(
+      rules.is-child-rule-allowed($mapWithAllAllowed, 'allAllowedChildMap', 'not-found-either'),
+      true
+    );
+    @include assert-equal(
+      rules.is-child-rule-allowed($mapWithAllAllowed, 'allAllowedChildMap', 'childDisallowed'),
+      false
+    );
+
+    $mapWithExplicitTrue: map.merge(
+      $map,
+      (
+        $HAS_EXPLICIT_TRUE: true,
+        'explicitChildMap': (
+          $HAS_EXPLICIT_TRUE: true,
+          'childAllowed': true,
+          'childDisallowed': false,
+        ),
+      )
+    );
+
+    @include assert-equal(rules.is-child-rule-allowed($map, 'allowed', 'all-are-allowed'), true);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'disallowed', 'childAllowed'), false);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'not-found', 'not-found-either'), false);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'childMap', 'not-found'), false);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'childMap', 'childAllowed'), true);
+    @include assert-equal(rules.is-child-rule-allowed($map, 'childMap', 'childDisallowed'), false);
+  }
+
+  @include describe('value-to-map') {
+    @include it('value-to-map when one value is "true"') {
+      $map: (
+        'name': true,
+      );
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        'name': true,
+        $HAS_EXPLICIT_TRUE: true,
+        $ALL_ALLOWED: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('value-to-map when one value is "false"') {
+      $map: (
+        'name': false,
+      );
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        'name': false,
+        $HAS_EXPLICIT_TRUE: false,
+        $ALL_ALLOWED: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('value-to-map when one value is "false" and another "true"') {
+      $map: (
+        'name': false,
+        'another': true,
+      );
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        'name': false,
+        'another': true,
+        $HAS_EXPLICIT_TRUE: true,
+        $ALL_ALLOWED: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('value-to-map when one value is a map') {
+      $map: (
+        'name': (
+          'child': true,
+        ),
+      );
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        'name': (
+          'child': true,
+          $HAS_EXPLICIT_TRUE: true,
+          $ALL_ALLOWED: false,
+        ),
+        $HAS_EXPLICIT_TRUE: true,
+        $ALL_ALLOWED: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('value-to-map when one value is an empty map') {
+      $map: (
+        'name': helpers.create-empty-map(),
+      );
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        'name': (
+          $HAS_EXPLICIT_TRUE: true,
+          $ALL_ALLOWED: true,
+        ),
+        $HAS_EXPLICIT_TRUE: true,
+        $ALL_ALLOWED: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('value-to-map when one value is a string') {
+      $map: (
+        'name': 'value',
+      );
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        'name': 'value',
+        $HAS_EXPLICIT_TRUE: true,
+        $ALL_ALLOWED: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('value-to-map when argument is null') {
+      $map: null;
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        $HAS_EXPLICIT_TRUE: false,
+        $ALL_ALLOWED: true,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+  }
+
+  // rules-to-map($args)
+  @include describe('rules-to-map') {
+    @include it('with empty map, all rules are allowed') {
+      $map: helpers.create-empty-map();
+      $result: rules.rules-to-map($map);
+      $expectedResult: (
+        'elements': (
+          $HAS_EXPLICIT_TRUE: false,
+          $ALL_ALLOWED: true,
+        ),
+        'modifiers': (
+          $HAS_EXPLICIT_TRUE: false,
+          $ALL_ALLOWED: true,
+        ),
+        'extras': (
+          $HAS_EXPLICIT_TRUE: false,
+          $ALL_ALLOWED: true,
+        ),
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('if a modifier is set, all elements are not allowed') {
+      $map: (
+        'modifiers': (
+          'element': 'newName',
+        ),
+      );
+      $result: rules.rules-to-map($map);
+
+      /// debug '-----> #{meta.inspect($result)}';
+
+      $expectedResult: (
+        'elements': (
+          $HAS_EXPLICIT_TRUE: false,
+          $ALL_ALLOWED: false,
+          $ALLOW_BASE_CONTENT: false,
+        ),
+        'modifiers': (
+          $HAS_EXPLICIT_TRUE: true,
+          $ALL_ALLOWED: false,
+          'element': 'newName',
+        ),
+        'extras': (
+          $HAS_EXPLICIT_TRUE: false,
+          $ALL_ALLOWED: true,
+        ),
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('if a modifier and element is set, all elements are not allowed') {
+      $map: (
+        'modifiers': (
+          'element': 'newName',
+        ),
+        'elements': (
+          'another-element': true,
+        ),
+      );
+      $result: rules.rules-to-map($map);
+
+      /// debug '-----> #{meta.inspect($result)}';
+
+      $expectedResult: (
+        'elements': (
+          $HAS_EXPLICIT_TRUE: true,
+          $ALL_ALLOWED: false,
+          $ALLOW_BASE_CONTENT: false,
+          'another-element': true,
+        ),
+        'modifiers': (
+          $HAS_EXPLICIT_TRUE: true,
+          $ALL_ALLOWED: false,
+          'element': 'newName',
+        ),
+        'extras': (
+          $HAS_EXPLICIT_TRUE: false,
+          $ALL_ALLOWED: true,
+        ),
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+  }
+}

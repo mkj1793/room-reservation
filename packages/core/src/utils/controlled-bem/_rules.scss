@@ -1,4 +1,9 @@
 /* stylelint-disable scss/function-no-unknown */
+@use "sass:meta";
+@use "sass:map";
+@use './globals' as *;
+@use './helpers' as helpers;
+
 @function is-entity-allowed($rules, $level) {
   @return false;
 }
@@ -8,14 +13,14 @@
 }
 
 /// value can be boolean, string or a map
-///   /// Parse modifiers
+/// Parse modifiers
 /// If value == true, all named entities are allowed
 /// If value == false, all named entities are excluded
 /// If value == string, only the given, named entity is allowed
 /// If value == map, named entities are picked from the map:
-///   If value = (name: string or name:true), only the given, named entity is allowed (multiple entities can be allowed)
-///   If value = (name:false), the given, named entity is disallowed
-@function value-to-map($value, $prefix: null) {
+///   if value = (name: string or name:true), only the given, named entity is allowed (multiple entities can be allowed)
+///   if value = (name:false), the given, named entity is disallowed
+@function value-to-map($value) {
   $returnValue: ();
   $valueType: meta.type-of($value);
   $allAccepted: true;
@@ -38,31 +43,32 @@
     $allAccepted: false;
 
     @each $itemName, $itemValue in $value {
-      $returnValue: map.set($returnValue, '#{$prefix}#{$itemName}', $itemValue);
+      $returnValue: map.set($returnValue, $itemName, $itemValue);
 
-      @if $explicitlySetTrue == false and $itemValue == true {
+      @if $explicitlySetTrue == false and helpers.can-value-be-truthy($itemValue) {
         $explicitlySetTrue: true;
       }
     }
   }
 
-  $returnValue: map.set($returnValue, 'all', $allAccepted);
+  $returnValue: map.set($returnValue, $ALL_ALLOWED, $allAccepted);
 
   @if $explicitlySetTrue {
-    $returnValue: map.set($returnValue, $hasExplicitTrue, true);
+    $returnValue: map.set($returnValue, $HAS_EXPLICIT_TRUE, true);
   } @else {
     /// debug 'NO EXPLICITS';
   }
 
   @if $isValueExplicitlyDisallowed {
-    $returnValue: map.set($returnValue, $isExplicitlyDisallowed, $isValueExplicitlyDisallowed);
+    $returnValue: map.set($returnValue, $IS_EXPLICITlY_DISALLOWED, $isValueExplicitlyDisallowed);
   }
 
   /// debug 'rv #{$allAccepted}';
   @return $returnValue;
 }
 
-@function rules-to-map($args, $target) {
+@function rules-to-map($args) {
+  $target: helpers.create-empty-map();
   $elements: value-to-map(map.get($args, 'elements'));
   $extras: value-to-map(map.get($args, 'extras'));
   $argModifiers: map.get($args, 'modifiers');
@@ -70,20 +76,17 @@
 
   /// debug 'argModifiers #{$argModifiers}';
 
-  @if meta.type-of($argModifiers) == 'map' {
+  @if helpers.is-value-map($argModifiers) {
     @each $modifierName, $modifierValue in $argModifiers {
-      $modifiers: map.set($modifiers, $modifierName, value-to-map($modifierValue));
+      /// $modifiers: map.set($modifiers, $modifierName, value-to-map($modifierValue));
     }
   }
 
-  @if map.get($modifiers, $hasExplicitTrue) {
-    $elements: map.set($elements, $blockBaseStyles, false);
-
-    /// Might be correct
-    $elements: map.set($elements, 'all', false);
-
-    /// Might be correct
-    $elements: map.set($elements, $hasExplicitTrue, true);
+  @if map.get($modifiers, $HAS_EXPLICIT_TRUE) {
+    $elements: map.set($elements, $ALLOW_BASE_CONTENT, false);
+    $elements: map.set($elements, $ALL_ALLOWED, false);
+  } @else if map.get($elements, $HAS_EXPLICIT_TRUE) {
+    $elements: map.set($elements, $ALLOW_BASE_CONTENT, false);
   }
 
   $target: map.set($target, 'modifiers', $modifiers);
@@ -91,4 +94,112 @@
   $target: map.set($target, 'extras', $extras);
 
   @return $target;
+}
+
+// Rule picking and verification
+
+@function get-parsed-map-value($namedMap, $name) {
+  $value: map.get($namedMap, $name);
+  $isAllowed: is-name-within-value($value, $name);
+
+  @if not $isAllowed {
+    @return $value;
+  }
+
+  $valueType: meta.type-of($value);
+
+  @if $valueType == 'string' or $valueType == 'map' {
+    @return $value;
+  }
+
+  @return $isAllowed;
+}
+
+@function get-rule-map-value($namedMap, $name) {
+  $value: get-parsed-map-value($namedMap, $name);
+
+  @if map.get($namedMap, $HAS_EXPLICIT_TRUE) == true and not $value {
+    @return false;
+  }
+
+  @if helpers.is-value-null($value) and map.get($namedMap, $ALL_ALLOWED) == true {
+    @return true;
+  }
+
+  @return $value;
+}
+
+@function is-name-within-value($value, $name) {
+  $valueType: meta.type-of($value);
+
+  @if meta.type-of($name) != 'string' {
+    @return false;
+  }
+
+  @if $valueType == 'null' {
+    @return false;
+  } @else if $valueType == 'bool' {
+    @return $value;
+  } @else if $valueType == 'string' {
+    @return $value == $name;
+  } @else if $valueType == 'map' {
+    @return is-name-within-value(map.get($value, $name), $name);
+  }
+
+  @return false;
+}
+
+/// purpose
+/// rules have modifiers("element":true);
+/// test if element is allowed in modifiers:
+/// is-child-rule-allowed($rules, "modifiers", "element");
+
+/*
+@function is-child-rule-allowed($namedMap, $name, $childName) {
+  $value: get-rule-map-value($namedMap, $name);
+
+  @if not $value {
+    @return false;
+  }
+
+  @if helpers.is-value-map($value) {
+    @return helpers.can-value-be-truthy(get-rule-map-value($value, $childName));
+  }
+
+  @return helpers.can-value-be-truthy($value);
+}
+*/
+@function is-rule-allowed($namedMap, $name) {
+  $value: get-rule-map-value($namedMap, $name);
+
+  @return helpers.can-value-be-truthy($value);
+}
+
+/// SPECIFIC CHECKS
+@function is-modifier-allowed($ruleMap, $modifier) {
+  @return is-rule-allowed(map.get($ruleMap, 'modifiers'), $modifier);
+}
+
+@function is-element-allowed($ruleMap, $element) {
+  @return is-rule-allowed(map.get($ruleMap, 'elements'), $element);
+}
+
+@function is-modifier-element-allowed($ruleMap, $modifier, $element) {
+  @if is-modifier-allowed($ruleMap, $modifier) {
+    $modifiers: map.get($ruleMap, 'modifiers');
+
+    @return helpers.can-value-be-truthy(get-rule-map-value($modifiers, $element));
+  }
+
+  @return false;
+}
+
+@function is-extra-allowed($ruleMap, $extra) {
+  @return is-rule-allowed(map.get($ruleMap, 'extras'), $extra);
+}
+
+@function is-base-content-allowed($ruleMap, $extra) {
+  $elements: map.get($ruleMap, 'elements');
+
+  @return helpers.can-value-be-falsy(map.get($elements, $ALLOW_BASE_CONTENT));
 }
