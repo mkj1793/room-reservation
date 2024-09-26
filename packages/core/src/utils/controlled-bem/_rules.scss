@@ -4,14 +4,6 @@
 @use './globals' as *;
 @use './helpers' as helpers;
 
-@function is-entity-allowed($rules, $level) {
-  @return false;
-}
-
-@function is-content-only($rules, $level) {
-  @return false;
-}
-
 /// value can be boolean, string or a map
 /// Parse modifiers
 /// If value == true, all named entities are allowed
@@ -154,7 +146,6 @@
 /// test if element is allowed in modifiers:
 /// is-child-rule-allowed($rules, "modifiers", "element");
 
-/*
 @function is-child-rule-allowed($namedMap, $name, $childName) {
   $value: get-rule-map-value($namedMap, $name);
 
@@ -168,14 +159,14 @@
 
   @return helpers.can-value-be-truthy($value);
 }
-*/
+
 @function is-rule-allowed($namedMap, $name) {
   $value: get-rule-map-value($namedMap, $name);
 
   @return helpers.can-value-be-truthy($value);
 }
 
-/// SPECIFIC CHECKS
+/// Entity, extra etc checks with rule map
 @function is-modifier-allowed($ruleMap, $modifier) {
   @return is-rule-allowed(map.get($ruleMap, 'modifiers'), $modifier);
 }

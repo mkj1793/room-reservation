@@ -1,12 +1,66 @@
+/* stylelint-disable scss/function-no-unknown */
 /* stylelint-disable scss/dollar-variable-pattern */
+@use "sass:map";
+@use "sass:list";
+
 /// GLOBALS
 
 $HAS_EXPLICIT_TRUE: 'HAS_EXPLICIT_TRUE';
 $ALL_ALLOWED: 'ALL_ALLOWED';
 $IS_EXPLICITlY_DISALLOWED: 'IS_EXPLICITlY_DISALLOWED';
 $ALLOW_BASE_CONTENT: 'ALLOW_BASE_CONTENT';
+
+/*
 $ENTITY_TYPE_BLOCK: 'ENTITY_TYPE_BLOCK';
 $ENTITY_TYPE_ELEMENT: 'ENTITY_TYPE_ELEMENT';
 $ENTITY_TYPE_MODIFIER: 'ENTITY_TYPE_MODIFIER';
 $ENTITY_TYPE_RULE: 'ENTITY_TYPE_RULE';
 $ENTITY_TYPE_SELECTOR: 'ENTITY_TYPE_SELECTOR';
+*/
+$GLOBAL_BEM_OBJECT: null;
+
+@function init-global-bem($ruleMap, $levels, $config) {
+  $GLOBAL_BEM_OBJECT: (
+    'rules': $ruleMap,
+    'level': $levels,
+    'config': $config,
+  ) !global;
+
+  @return $GLOBAL_BEM_OBJECT;
+}
+
+@function update-global-bem-rules($ruleMap) {
+  $GLOBAL_BEM_OBJECT: map.set($GLOBAL_BEM_OBJECT, 'rules', $ruleMap) !global;
+
+  @return $GLOBAL_BEM_OBJECT;
+}
+
+@function add-global-bem-level($level) {
+  $current: get-global-bem-levels();
+  $updated: list.append($current, $level);
+  $void: update-global-bem-levels($updated);
+
+  @return $updated;
+}
+
+@function update-global-bem-levels($levels) {
+  $GLOBAL_BEM_OBJECT: map.set($GLOBAL_BEM_OBJECT, 'levels', $levels) !global;
+
+  @return $GLOBAL_BEM_OBJECT;
+}
+
+@function get-global-bem($levels) {
+  @return $GLOBAL_BEM_OBJECT;
+}
+
+@function get-global-bem-levels() {
+  @return map.get($GLOBAL_BEM_OBJECT, 'levels');
+}
+
+@function get-global-bem-rules() {
+  @return map.get($GLOBAL_BEM_OBJECT, 'rules');
+}
+
+@function get-global-bem-config() {
+  @return map.get($GLOBAL_BEM_OBJECT, 'config');
+}

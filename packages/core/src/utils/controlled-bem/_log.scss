@@ -2,6 +2,7 @@
 @use "sass:meta";
 @use "sass:map";
 @use "sass:list";
+@use './helpers' as helpers;
 
 /// This file is currently for testing args... in scss
 
@@ -62,5 +63,18 @@
   /// debug 'inspect map 2:#{meta.inspect($map)}';
   /// debug 'block 2:#{map.get($map, "block2")}';
   /// debug 'inspect rules:#{meta.inspect($rules)}';
+  @return true;
+}
+
+@function logx($args...) {
+  /// THIS CAUSES ERRORS WHEN CALLED
+  /// logger.logx(
+  /// $block: 'blockName',
+  /// $elem: 'elem',
+  /// );
+  $argMap: helpers.arg-list-to-map($args);
+  /// NO ERROR WITH
+  /// $argMap: helpers.arg-list-to-map($args);
+
   @return true;
 }

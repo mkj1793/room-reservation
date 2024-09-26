@@ -1,0 +1,25 @@
+/* stylelint-disable scss/function-no-unknown */
+@use './globals.scss' as globals;
+@use './levels.scss' as levels;
+@use './rules.scss' as rules;
+@use './helpers.scss' as helpers;
+
+$globalRules: null;
+
+@function process-level($args...) {
+  // add create-process-level() to global...
+}
+
+@function create-process-level($args...) {
+  $rules: globals.get-global-bem-rules();
+  $levels: globals.get-global-bem-levels();
+  $parent: levels.get-current-level($levels);
+  $newLevel: levels.create-level($rules, $parent, $args...);
+  $void: globals.add-global-bem-level($newLevel);
+
+  @return $newLevel;
+}
+
+@function stop-processing-current-level() {
+  @return null;
+}

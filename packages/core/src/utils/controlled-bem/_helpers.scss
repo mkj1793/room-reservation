@@ -34,7 +34,7 @@
 
 // Returns the (key,value) map of the first item in map that has a non-null value
 @function get-map-data-with-value($target) {
-  $keyWithValue: get-map-key-with-value();
+  $keyWithValue: get-map-key-with-value($target);
 
   @if not $keyWithValue {
     @return null;
@@ -78,4 +78,14 @@
 /// empty () do not have type-of map, it is a list
 @function create-empty-map() {
   @return map.merge((), ());
+}
+
+@function arg-list-to-map($args...) {
+  @return meta.keywords($args);
+}
+
+@function get-last-list-item($list) {
+  $len: if($list, list.length($list), 0);
+
+  @return if($len > 0, list.nth($list, -1), null);
 }

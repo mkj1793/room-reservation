@@ -1,23 +1,24 @@
 /* stylelint-disable scss/function-no-unknown */
+@use "sass:map";
+@use './globals.scss' as globals;
 @use './levels.scss' as levels;
 @use './rules.scss' as rules;
+@use './helpers.scss' as helpers;
 
-$globalRules: null;
-
-@function init-controlled-bem($args) {
+@function init-controlled-bem($args...) {
+  $argMap: helpers.arg-list-to-map($args...);
   $rootSelector: null;
   $parent: &;
-  $rules: (
-    'levels': levels.init-levels(),
+  $rules: rules.rules-to-map($argMap);
+  $levels: [];
+  $blockName: map.get($argMap, 'blockName');
+  $config: (
+    'blockName': $blockName,
     'rootSelector': $rootSelector,
-    'elements': (),
-    'modifiers': (),
-    'extras': (),
+    'parent': $parent,
   );
-  $rules: rules.rules-to-map($args, $rules);
-  $globalRules: $rules !global;
 
-  @return $rules;
+  @return globals.init-global-bem($rules, $levels, $config);
 }
 
 /// for future use

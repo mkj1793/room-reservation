@@ -1,0 +1,24 @@
+/* stylelint-disable scss/function-no-unknown */
+@use 'sass-true' as *;
+@use './test-helpers' as testHelpers;
+@use './exports' as exports;
+@use './process' as process;
+
+@include describe('_process.scss') {
+  @include it('create-process-level') {
+    $global: exports.init-controlled-bem(
+      $blockName: 'myBlock',
+    );
+    $newLevel: process.create-process-level(
+      $block: 'name',
+    );
+    $expectedResult: (
+      'type': '',
+      'parent': null,
+      'isAllowed': true,
+      'selector': '....',
+    );
+
+    @include assert-equal(testHelpers.diff-map($newLevel, $expectedResult), []);
+  }
+}

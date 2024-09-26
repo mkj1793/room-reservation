@@ -1,4 +1,5 @@
 /* stylelint-disable scss/function-no-unknown */
+@use "sass:map";
 @use './helpers.scss' as helpers;
 @use './rules.scss' as rules;
 @use './selectors.scss' as selectors;
@@ -17,18 +18,11 @@
   @return $levels;
 }
 
-@function create-level-data($parent, $block: null, $modifier: null, $element: null, $content: null, $custom: null) {
-  $parent: map.get($level, 'parent');
+@function create-level-data($parent, $args...) {
   $parentDepth: if($parent, map.get($parent, 'depth'), -1);
   $parentIsContentOnly: if($parent, map.get($parent, 'contentOnly'), false);
   $depth: if($parentIsContentOnly, $parentDepth, $parentDepth + 1);
-  $levelProps: helpers.get-map-data-with-value(
-    $block: null,
-    $modifier: null,
-    $element: null,
-    $content: null,
-    $custom: null,
-  );
+  $levelProps: helpers.get-map-data-with-value(helpers.arg-list-to-map($args...));
 
   @if not $levelProps {
     @return (depth: -1, $type: null, $name: null, $parent: null);
@@ -43,8 +37,8 @@
 @function append-level-rules($rules, $level) {
   $parent: map.get($level, 'parent');
   $parentAllowed: if($parent, map.get($parent, 'isAllowed'), true);
-  $isAllowed: $parentAllowed and checkers.is-entity-allowed($rules, $level);
-  $contentOnly: $isAllowed and checkers.is-content-only($rules, $level);
+  $isAllowed: $parentAllowed and is-level-allowed($rules, $level);
+  $contentOnly: $isAllowed and is-content-only($rules, $level);
   $selector: $isAllowed and not $contentOnly and selectors.create-level-selector($rules, $level);
 
   ///
@@ -55,28 +49,28 @@
   @return $level;
 }
 
-@function create-level($rules, $parent, $block: null, $modifier: null, $element: null, $content: null, $custom: null) {
-  $data: create-level-data();
+@function create-level($rules, $args...) {
+  $level: create-level-data($args...);
 
-  @if not map.get($data, 'type') {
-    @return $data;
+  @if not map.get($level, 'type') {
+    @return $level;
   }
 
-  $level: append-level-rules($rules, $level);
+  @return append-level-rules($rules, $level);
 }
 
-@function add-tracking-level($args...) {
-  @return false;
-}
-
-@function pop-tracking-level() {
-  @return false;
-}
-
-@function get-current-tracking-level() {
-  @return false;
+@function get-current-level($levels) {
+  @return helpers.get-last-list-item($levels);
 }
 
 @function get-closest($type) {
+  @return false;
+}
+
+@function is-level-allowed($rules, $level) {
+  @return false;
+}
+
+@function is-content-only($rules, $level) {
   @return false;
 }
