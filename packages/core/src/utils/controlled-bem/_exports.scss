@@ -4,6 +4,8 @@
 @use './levels.scss' as levels;
 @use './rules.scss' as rules;
 @use './helpers.scss' as helpers;
+@use './process.scss' as process;
+@use './output.scss' as output;
 
 @function init-controlled-bem($args...) {
   $argMap: helpers.arg-list-to-map($args...);
@@ -11,11 +13,17 @@
   $parent: &;
   $rules: rules.rules-to-map($argMap);
   $levels: [];
-  $blockName: map.get($argMap, 'blockName');
+  $blockName: map.get($argMap, 'block');
+
+  @debug '$blockName #{$blockName}';
+
   $config: (
     'blockName': $blockName,
     'rootSelector': $rootSelector,
     'parent': $parent,
+    'blockPrefix': 'hds-',
+    'modifierDelimeter': '--',
+    'elementDelimeter': '__',
   );
 
   @return globals.init-global-bem($rules, $levels, $config);
@@ -27,49 +35,49 @@
 }
 
 @mixin block() {
-  $processData: start-processing(
-    $block: true,
+  $processData: process.start(
+    $block: '',
   );
 
-  @include handle-output($processData) {
+  @include output.emit($processData) {
     @content;
   }
 
-  $void: stop-processing($processData);
+  $void: process.end();
 }
 
 @mixin content($element) {
-  $processData: start-processing(
+  $processData: process.start(
     $content: $element,
   );
 
-  @include handle-output($processData) {
+  @include output.emit($processData) {
     @content;
   }
 
-  $void: stop-processing($processData);
+  $void: process.end();
 }
 
 @mixin modifier($modifier) {
-  $processData: start-processing(
+  $processData: process.start(
     $modifier: $modifier,
   );
 
-  @include handle-output($processData) {
+  @include output.emit($processData) {
     @content;
   }
 
-  $void: stop-processing($processData);
+  $void: process.end();
 }
 
 @mixin element($element) {
-  $processData: start-processing(
+  $processData: process.start(
     $element: $element,
   );
 
-  @include handle-output($processData) {
+  @include output.emit($processData) {
     @content;
   }
 
-  $void: stop-processing($processData);
+  $void: process.end();
 }

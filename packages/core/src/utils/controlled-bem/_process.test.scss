@@ -7,18 +7,33 @@
 @include describe('_process.scss') {
   @include it('create-process-level') {
     $global: exports.init-controlled-bem(
-      $blockName: 'myBlock',
+      $block: 'myBlock',
     );
-    $newLevel: process.create-process-level(
-      $block: 'name',
+    $newBlock: process.start(
+      $block: '',
     );
     $expectedResult: (
-      'type': '',
+      'type': 'block',
       'parent': null,
       'isAllowed': true,
-      'selector': '....',
+      'selector': '.hds-myBlock',
+      'depth': 0,
+      'name': '',
     );
 
-    @include assert-equal(testHelpers.diff-map($newLevel, $expectedResult), []);
+    @include assert-equal(testHelpers.diff-map($newBlock, $expectedResult), []);
+
+    $newModifier: process.start(
+      $modifier: 'modifier',
+    );
+    $expectedResult: (
+      'type': 'modifier',
+      'isAllowed': true,
+      'selector': '.hds-myBlock--modifier',
+      'depth': 1,
+      'name': 'modifier',
+    );
+
+    @include assert-equal(testHelpers.diff-map($newModifier, $expectedResult), []);
   }
 }

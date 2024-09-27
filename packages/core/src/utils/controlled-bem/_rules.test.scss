@@ -38,7 +38,6 @@ $defaultMap: (
       (
         'mappy': $defaultMap,
         $ALL_ALLOWED: false,
-        $HAS_EXPLICIT_TRUE: false,
       )
     );
     $mapWithAllAllowed: map.merge(
@@ -241,35 +240,69 @@ $defaultMap: (
   }
 
   @include describe('value-to-map') {
-    @include it('value-to-map when one value is "true"') {
-      $map: (
-        'name': true,
-      );
-      $result: rules.value-to-map($map);
+    @include it('when value is "true"') {
+      $value: true;
+      $result: rules.value-to-map($value);
       $expectedResult: (
-        'name': true,
-        $HAS_EXPLICIT_TRUE: true,
-        $ALL_ALLOWED: false,
-      );
-
-      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
-    }
-
-    @include it('value-to-map when one value is "false"') {
-      $map: (
-        'name': false,
-      );
-      $result: rules.value-to-map($map);
-      $expectedResult: (
-        'name': false,
+        $ALL_ALLOWED: true,
         $HAS_EXPLICIT_TRUE: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('when value is "false"') {
+      $value: false;
+      $result: rules.value-to-map($value);
+      $expectedResult: (
+        $ALL_ALLOWED: false,
+        $HAS_EXPLICIT_TRUE: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('when value is "string"') {
+      $value: 'stringy';
+      $result: rules.value-to-map($value);
+      $expectedResult: (
+        $HAS_EXPLICIT_TRUE: true,
+        $ALL_ALLOWED: false,
+        'stringy': true,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('when one value is "true"') {
+      $map: (
+        'name': true,
+      );
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        'name': true,
+        $HAS_EXPLICIT_TRUE: true,
         $ALL_ALLOWED: false,
       );
 
       @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
     }
 
-    @include it('value-to-map when one value is "false" and another "true"') {
+    @include it('when one value is "false"') {
+      $map: (
+        'name': false,
+      );
+      $result: rules.value-to-map($map);
+      $expectedResult: (
+        'name': false,
+        $ALL_ALLOWED: false,
+        $HAS_EXPLICIT_TRUE: false,
+      );
+
+      @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
+    }
+
+    @include it('when one value is "false" and another "true"') {
       $map: (
         'name': false,
         'another': true,
@@ -285,7 +318,7 @@ $defaultMap: (
       @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
     }
 
-    @include it('value-to-map when one value is a map') {
+    @include it('when one value is a map') {
       $map: (
         'name': (
           'child': true,
@@ -293,11 +326,7 @@ $defaultMap: (
       );
       $result: rules.value-to-map($map);
       $expectedResult: (
-        'name': (
-          'child': true,
-          $HAS_EXPLICIT_TRUE: true,
-          $ALL_ALLOWED: false,
-        ),
+        'name': true,
         $HAS_EXPLICIT_TRUE: true,
         $ALL_ALLOWED: false,
       );
@@ -305,16 +334,13 @@ $defaultMap: (
       @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
     }
 
-    @include it('value-to-map when one value is an empty map') {
+    @include it('when one value is an empty map') {
       $map: (
         'name': helpers.create-empty-map(),
       );
       $result: rules.value-to-map($map);
       $expectedResult: (
-        'name': (
-          $HAS_EXPLICIT_TRUE: true,
-          $ALL_ALLOWED: true,
-        ),
+        'name': true,
         $HAS_EXPLICIT_TRUE: true,
         $ALL_ALLOWED: false,
       );
@@ -322,7 +348,7 @@ $defaultMap: (
       @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
     }
 
-    @include it('value-to-map when one value is a string') {
+    @include it('when one value is a string') {
       $map: (
         'name': 'value',
       );
@@ -336,12 +362,12 @@ $defaultMap: (
       @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
     }
 
-    @include it('value-to-map when argument is null') {
+    @include it('when argument is null') {
       $map: null;
       $result: rules.value-to-map($map);
       $expectedResult: (
-        $HAS_EXPLICIT_TRUE: false,
         $ALL_ALLOWED: true,
+        $HAS_EXPLICIT_TRUE: false,
       );
 
       @include assert-equal(testHelpers.diff-map($result, $expectedResult), []);
@@ -355,16 +381,16 @@ $defaultMap: (
       $result: rules.rules-to-map($map);
       $expectedResult: (
         'elements': (
-          $HAS_EXPLICIT_TRUE: false,
           $ALL_ALLOWED: true,
+          $HAS_EXPLICIT_TRUE: false,
         ),
         'modifiers': (
-          $HAS_EXPLICIT_TRUE: false,
           $ALL_ALLOWED: true,
+          $HAS_EXPLICIT_TRUE: false,
         ),
         'extras': (
-          $HAS_EXPLICIT_TRUE: false,
           $ALL_ALLOWED: true,
+          $HAS_EXPLICIT_TRUE: false,
         ),
       );
 
@@ -378,13 +404,10 @@ $defaultMap: (
         ),
       );
       $result: rules.rules-to-map($map);
-
-      /// debug '-----> #{meta.inspect($result)}';
-
       $expectedResult: (
         'elements': (
-          $HAS_EXPLICIT_TRUE: false,
           $ALL_ALLOWED: false,
+          $HAS_EXPLICIT_TRUE: false,
           $ALLOW_BASE_CONTENT: false,
         ),
         'modifiers': (
@@ -393,8 +416,8 @@ $defaultMap: (
           'element': 'newName',
         ),
         'extras': (
-          $HAS_EXPLICIT_TRUE: false,
           $ALL_ALLOWED: true,
+          $HAS_EXPLICIT_TRUE: false,
         ),
       );
 
@@ -411,9 +434,6 @@ $defaultMap: (
         ),
       );
       $result: rules.rules-to-map($map);
-
-      /// debug '-----> #{meta.inspect($result)}';
-
       $expectedResult: (
         'elements': (
           $HAS_EXPLICIT_TRUE: true,
@@ -427,8 +447,8 @@ $defaultMap: (
           'element': 'newName',
         ),
         'extras': (
-          $HAS_EXPLICIT_TRUE: false,
           $ALL_ALLOWED: true,
+          $HAS_EXPLICIT_TRUE: false,
         ),
       );
 

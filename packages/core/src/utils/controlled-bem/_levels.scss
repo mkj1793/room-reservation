@@ -1,5 +1,7 @@
 /* stylelint-disable scss/function-no-unknown */
 @use "sass:map";
+@use "sass:meta";
+@use './globals.scss' as globals;
 @use './helpers.scss' as helpers;
 @use './rules.scss' as rules;
 @use './selectors.scss' as selectors;
@@ -34,12 +36,12 @@
   @return ('parent': $parent, 'type': $type, 'depth': $depth, 'name': $name);
 }
 
-@function append-level-rules($rules, $level) {
+@function append-level-rules($ruleMap, $config, $level) {
   $parent: map.get($level, 'parent');
   $parentAllowed: if($parent, map.get($parent, 'isAllowed'), true);
-  $isAllowed: $parentAllowed and is-level-allowed($rules, $level);
-  $contentOnly: $isAllowed and is-content-only($rules, $level);
-  $selector: $isAllowed and not $contentOnly and selectors.create-level-selector($rules, $level);
+  $isAllowed: $parentAllowed and is-level-allowed-in-rules($ruleMap, $level);
+  $contentOnly: $isAllowed and is-level-content-only($level);
+  $selector: $isAllowed and not $contentOnly and create-level-selector($config, $level);
 
   ///
   $level: map.set($level, 'isAllowed', $isAllowed);
@@ -49,28 +51,178 @@
   @return $level;
 }
 
-@function create-level($rules, $args...) {
+@function create-level($ruleMap, $config, $args...) {
   $level: create-level-data($args...);
 
-  @if not map.get($level, 'type') {
-    @return $level;
-  }
-
-  @return append-level-rules($rules, $level);
+  @return append-level-rules($ruleMap, $config, $level);
 }
 
 @function get-current-level($levels) {
   @return helpers.get-last-list-item($levels);
 }
 
-@function get-closest($type) {
+@function get-level-parent-selector($config, $level) {
+  $parent: get-level-parent($level);
+
+  @if $parent {
+    @return get-level-selector($parent);
+  }
+
+  @return globals.get-root-selector($config);
+}
+
+@function create-level-selector($config, $level) {
+  $initial: get-level-parent-selector($config, $level);
+  $type: get-level-type($level);
+  $name: get-level-name($level);
+
+  @if helpers.can-value-be-falsy($name) and is-block-type($type) {
+    $name: globals.get-block-name($config);
+  }
+
+  @return selectors.create-selector($initial, $type, $name, $config);
+}
+
+@function get-closest($level, $type) {
+  $parent: get-level-parent($level);
+
+  @while $parent {
+    @if get-level-type($parent) == $type {
+      @return $parent;
+    }
+
+    $parent: get-level-parent($parent);
+  }
+
+  @return null;
+}
+
+@function get-closest-entity($level) {
+  $parent: get-level-parent($level);
+
+  @while $parent {
+    $parentType: get-level-type($parent);
+
+    @if is-block-type($parentType) or is-modifier-type($parentType) or is-element-type($parentType) {
+      @return $parent;
+    }
+
+    $parent: get-level-parent($parent);
+  }
+
+  @return null;
+}
+
+@function is-level-allowed-in-rules($ruleMap, $level) {
+  $type: get-level-type($level);
+  $name: get-level-name($level);
+
+  @if is-block-type($type) {
+    @return true;
+  } @else if is-modifier-type($type) {
+    @return rules.is-modifier-allowed($ruleMap, $name);
+  } @else if is-element-type($type) {
+    // get parent modifier
+    $closestModifier: get-closest($level, 'modifier');
+
+    @if $closestModifier {
+      @return rules.is-modifier-element-allowed($ruleMap, get-level-name($closestModifier), $name);
+    } @else {
+      @return rules.is-element-allowed($ruleMap, $name);
+    }
+
+    @return false;
+  } @else if is-content-type($type) {
+    $closestEntity: get-closest-entity();
+
+    @if not $closestEntity {
+      @return true;
+    }
+
+    $closestType: get-level-type($closestEntity);
+
+    @if is-block-type($closestType) {
+      @if not $name or globals.is-base-name($name) {
+        @return rules.is-base-content-allowed($ruleMap);
+      }
+    } @else if not $name {
+      @return true;
+    } @else if is-modifier-type($closestType) {
+      @return rules.is-modifier-element-allowed($ruleMap, get-level-name($closestEntity), $name);
+    } @else if is-element-type($closestType) {
+      @return rules.is-element-allowed($ruleMap, get-level-name($closestEntity));
+    }
+  } @else if is-extra-type($type) {
+    @return rules.is-extra-allowed($ruleMap, $name);
+  }
+
   @return false;
 }
 
-@function is-level-allowed($rules, $level) {
+@function is-level-content-only($level) {
   @return false;
 }
 
-@function is-content-only($rules, $level) {
-  @return false;
+@function get-level-type($level) {
+  @return map.get($level, 'type');
+}
+
+@function get-level-name($level) {
+  @return map.get($level, 'name');
+}
+
+@function get-level-parent($level) {
+  @return map.get($level, 'parent');
+}
+
+@function get-level-depth($level) {
+  @return map.get($level, 'depth');
+}
+
+@function get-level-selector($level) {
+  @return map.get($level, 'selector');
+}
+
+@function is-level-allowed($level) {
+  @return map.get($level, 'isAllowed');
+}
+
+@function is-block-type($type) {
+  @return $type == 'block';
+}
+
+@function is-modifier-type($type) {
+  @return $type == 'modifier';
+}
+
+@function is-element-type($type) {
+  @return $type == 'element';
+}
+
+@function is-content-type($type) {
+  @return $type == 'content';
+}
+
+@function is-extra-type($type) {
+  @return $type == 'extra';
+}
+
+@function is-block-level($level) {
+  @return is-block-type(get-level-type($level));
+}
+
+@function is-modifier-level($level) {
+  @return is-block-type(get-level-type($level));
+}
+
+@function is-element-level($level) {
+  @return is-block-type(get-level-type($level));
+}
+
+@function is-content-level($level) {
+  @return is-block-type(get-level-type($level));
+}
+
+@function is-extra-level($level) {
+  @return is-block-type(get-level-type($level));
 }

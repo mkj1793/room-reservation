@@ -1,9 +1,42 @@
-@function create-entity-selector($block: null) {
-  @return '';
-}
+/* stylelint-disable scss/function-no-unknown */
+@use "sass:map";
+@use './globals.scss' as globals;
 
-@function create-level-selector($rules, $level) {
-  $parent: map.get($level, 'parent');
+@function create-selector($initial, $type, $name, $config) {
+  $selector: $initial;
+  $prefix: null;
 
-  @return 'be';
+  @if $type == 'block' {
+    $blockPrefix: globals.get-block-prefix($config);
+    $prefix: '.#{$blockPrefix}';
+  }
+
+  @if $type == 'modifier' {
+    $modifierDelimeter: globals.get-modifier-delimeter($config);
+    $prefix: '#{$modifierDelimeter}';
+  }
+
+  @if $type == 'element' {
+    $elementDelimeter: globals.get-element-delimeter($config);
+    $prefix: '#{$elementDelimeter}';
+  }
+
+  @if $type == 'class' {
+    $prefix: '.';
+  }
+
+  @if $type == 'id' {
+    $prefix: '#';
+  }
+
+  @if $type == 'dashed' {
+    $prefix: '-';
+  }
+
+  /* stylelint-disable-next-line scss/at-if-no-null */
+  @if $prefix != null {
+    $selector: '#{$selector}#{$prefix}#{$name}';
+  }
+
+  @return $selector;
 }

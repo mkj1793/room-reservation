@@ -2,6 +2,7 @@
 /* stylelint-disable scss/dollar-variable-pattern */
 @use "sass:map";
 @use "sass:list";
+@use './helpers.scss' as helpers;
 
 /// GLOBALS
 
@@ -9,6 +10,7 @@ $HAS_EXPLICIT_TRUE: 'HAS_EXPLICIT_TRUE';
 $ALL_ALLOWED: 'ALL_ALLOWED';
 $IS_EXPLICITlY_DISALLOWED: 'IS_EXPLICITlY_DISALLOWED';
 $ALLOW_BASE_CONTENT: 'ALLOW_BASE_CONTENT';
+$BASE_CONTENT_NAME: 'base';
 
 /*
 $ENTITY_TYPE_BLOCK: 'ENTITY_TYPE_BLOCK';
@@ -49,6 +51,13 @@ $GLOBAL_BEM_OBJECT: null;
   @return $GLOBAL_BEM_OBJECT;
 }
 
+@function remove-current-global-bem-level() {
+  $levels: get-global-bem-levels();
+  $newList: helpers.pop-list($levels);
+
+  @return update-global-bem-levels($newList);
+}
+
 @function get-global-bem($levels) {
   @return $GLOBAL_BEM_OBJECT;
 }
@@ -63,4 +72,34 @@ $GLOBAL_BEM_OBJECT: null;
 
 @function get-global-bem-config() {
   @return map.get($GLOBAL_BEM_OBJECT, 'config');
+}
+
+@function is-base-name($name) {
+  @return $name == $BASE_CONTENT_NAME;
+}
+
+@function get-config-value($value, $config: null) {
+  $config: $config or get-global-bem-config();
+
+  @return map.get($config, $value);
+}
+
+@function get-block-prefix($config: null) {
+  @return get-config-value('blockPrefix', $config);
+}
+
+@function get-block-name($config: null) {
+  @return get-config-value('blockName', $config);
+}
+
+@function get-root-selector($config: null) {
+  @return get-config-value('rootSelector', $config);
+}
+
+@function get-modifier-delimeter($config: null) {
+  @return get-config-value('modifierDelimeter', $config);
+}
+
+@function get-element-delimeter($config: null) {
+  @return get-config-value('elementDelimeter', $config);
 }

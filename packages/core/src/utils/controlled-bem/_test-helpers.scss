@@ -4,8 +4,9 @@
 @use "sass:meta";
 @use "sass:list";
 
+// tested keys are from "expected" so partials can be tested.
 @function diff-map($target, $expected, $diffs: []) {
-  @each $key in map.keys($target) {
+  @each $key in map.keys($expected) {
     $value: map.get($target, $key);
     $expectedValue: map.get($expected, $key);
 
@@ -17,10 +18,7 @@
       }
     } @else {
       @if $value != $expectedValue {
-        $diffs: list.append(
-          $diffs,
-          'expected "#{$key}" to be "#{$expectedValue}", but got to be "#{meta.inspect($value)}"'
-        );
+        $diffs: list.append($diffs, 'expected "#{$key}" to be "#{$expectedValue}", but got "#{meta.inspect($value)}"');
       }
     }
   }

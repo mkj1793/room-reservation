@@ -459,6 +459,7 @@ $isExplicitlyDisallowed: '@isExplicitlyDisallowed';
     $explicitlySetTrue: true;
   } @else if $valueType == 'map' {
     $allAccepted: false;
+    $explicitlySetTrue: true;
 
     @each $itemName, $itemValue in $value {
       $returnValue: map.set($returnValue, '#{$prefix}#{$itemName}', $itemValue);

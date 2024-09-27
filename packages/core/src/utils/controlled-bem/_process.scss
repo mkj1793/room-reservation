@@ -6,20 +6,23 @@
 
 $globalRules: null;
 
-@function process-level($args...) {
-  // add create-process-level() to global...
-}
-
-@function create-process-level($args...) {
-  $rules: globals.get-global-bem-rules();
-  $levels: globals.get-global-bem-levels();
-  $parent: levels.get-current-level($levels);
-  $newLevel: levels.create-level($rules, $parent, $args...);
+@function start($args...) {
+  $newLevel: create-process-level($args...);
   $void: globals.add-global-bem-level($newLevel);
 
   @return $newLevel;
 }
 
-@function stop-processing-current-level() {
-  @return null;
+@function create-process-level($args...) {
+  $rules: globals.get-global-bem-rules();
+  $levels: globals.get-global-bem-levels();
+  $config: globals.get-global-bem-config();
+  $parent: levels.get-current-level($levels);
+  $newLevel: levels.create-level($rules, $config, $parent, $args...);
+
+  @return $newLevel;
+}
+
+@function end() {
+  @return globals.remove-current-global-bem-level();
 }

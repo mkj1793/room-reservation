@@ -1,7 +1,9 @@
-@mixin handle-output($level) {
-  $contentOnly: map.get($level, 'contentOnly');
-  $isAllowed: map.get($level, 'isAllowed');
-  $selector: map.get($level, 'selector');
+@use './levels.scss' as levels;
+
+@mixin emit($level) {
+  $contentOnly: levels.is-level-content-only($level);
+  $isAllowed: levels.is-level-allowed($level);
+  $selector: levels.get-level-selector($level);
 
   /// debug 'selector #{$selector}';
 

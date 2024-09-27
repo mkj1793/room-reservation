@@ -1,0 +1,88 @@
+/* stylelint-disable scss/function-no-unknown */
+@use 'sass-true' as *;
+@use './exports' as *;
+
+@mixin testSCSS($elements: true, $modifiers: true, $extras: true) {
+  @debug '-------!!!';
+
+  $void: init-controlled-bem($modifiers, $elements, $extras, $block: 'test');
+
+  @include block {
+    --hds-test: var(--var-base);
+
+    div {
+      --hds-test-div: var(--var-div);
+    }
+
+    @include element('another-element') {
+      --hds-test-another-element: var(--var-another-element);
+
+      li {
+        --hds-test-another-element-li: var(--var-li);
+      }
+    }
+
+    @include modifier('modifier') {
+      --hds-test-modifier: var(--var-modifier);
+
+      span {
+        --hds-test-modifier-span: var(--var-span);
+      }
+
+      @include element('modifier-element') {
+        --hds-test-modifier-element: var(--var-modifier-element);
+
+        ul {
+          --hds-test-modifier-element-ul: var(--var-ul);
+        }
+      }
+    }
+  }
+}
+
+@include describe('Test different parameters') {
+  @include it('With a defined elements, only rules in it are outputted.') {
+    @include assert {
+      @include output {
+        @include testSCSS;
+      }
+
+      @include expect {
+        /// at-root is required :(
+        @at-root {
+          .hds-test {
+            --hds-test: var(--var-base);
+          }
+
+          .hds-test div {
+            --hds-test-div: var(--var-div);
+          }
+
+          .hds-test__another-element {
+            --hds-test-another-element: var(--var-another-element);
+          }
+
+          .hds-test__another-element li {
+            --hds-test-another-element-li: var(--var-li);
+          }
+
+          .hds-test--modifier {
+            --hds-test-modifier: var(--var-modifier);
+          }
+
+          .hds-test--modifier span {
+            --hds-test-modifier-span: var(--var-span);
+          }
+
+          .hds-test--modifier__modifier-element {
+            --hds-test-modifier-element: var(--var-modifier-element);
+          }
+
+          .hds-test--modifier__modifier-element ul {
+            --hds-test-modifier-element-ul: var(--var-ul);
+          }
+        }
+      }
+    }
+  }
+}

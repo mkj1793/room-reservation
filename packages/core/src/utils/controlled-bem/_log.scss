@@ -78,3 +78,11 @@
 
   @return true;
 }
+
+/// when calling func order or named params with args... matter
+/// logZ($param1, $param3, $param2, $args...);
+/// does NOT mean param3 is in args. param3 is now param2
+@function logZ($param1, $param2, $args...) {
+  $argMap: helpers.arg-list-to-map($args);
+  @return true;
+}
