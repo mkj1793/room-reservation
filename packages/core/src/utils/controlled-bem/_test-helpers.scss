@@ -25,3 +25,28 @@
 
   @return $diffs;
 }
+
+@function inspect($note, $data) {
+  @debug '#{$note}: #{meta.inspect($data)}';
+  @return null;
+}
+
+/*
+
+$void: testHelpers.inspectArgs(
+  $selector: $selector,
+  $original: $original,
+  $replacement: $replacement,
+  $note: 'props',
+);
+
+*/
+@function inspectArgs($args...) {
+  $data: helpers.create-empty-map();
+  @each $key, $value in meta.keywords($args) {
+    $data: map.set($data, $key, $value);
+  }
+
+  @debug 'inspectArgs: #{meta.inspect($data)}';
+  @return null;
+}

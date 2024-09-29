@@ -4,13 +4,20 @@
   $contentOnly: levels.is-level-content-only($level);
   $isAllowed: levels.is-level-allowed($level);
   $selector: levels.get-level-selector($level);
+  $shouldEmitAtRoot: levels.should-level-emit-at-root($level);
 
   /// debug 'selector #{$selector}';
 
   @if $contentOnly {
     @content;
   } @else if $isAllowed {
-    @at-root {
+    @if $shouldEmitAtRoot {
+      @at-root {
+        #{$selector} {
+          @content;
+        }
+      }
+    } @else {
       #{$selector} {
         @content;
       }

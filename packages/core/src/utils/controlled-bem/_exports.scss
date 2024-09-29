@@ -1,11 +1,15 @@
+/* stylelint-disable scss/dollar-variable-pattern */
 /* stylelint-disable scss/function-no-unknown */
 @use "sass:map";
+@use "sass:meta";
 @use './globals.scss' as globals;
 @use './levels.scss' as levels;
 @use './rules.scss' as rules;
 @use './helpers.scss' as helpers;
+@use './test-helpers.scss' as testHelpers;
 @use './process.scss' as process;
 @use './output.scss' as output;
+@use './selectors.scss' as selectors;
 
 @function init-controlled-bem($args...) {
   $argMap: helpers.arg-list-to-map($args...);
@@ -14,9 +18,6 @@
   $rules: rules.rules-to-map($argMap);
   $levels: [];
   $blockName: map.get($argMap, 'block');
-
-  @debug '$blockName #{$blockName}';
-
   $config: (
     'blockName': $blockName,
     'rootSelector': $rootSelector,
@@ -35,23 +36,23 @@
 }
 
 @mixin block() {
-  $processData: process.start(
+  $createdLevel: process.start(
     $block: '',
   );
 
-  @include output.emit($processData) {
+  @include output.emit($createdLevel) {
     @content;
   }
 
   $void: process.end();
 }
 
-@mixin content($element) {
-  $processData: process.start(
+@mixin content($element: '') {
+  $createdLevel: process.start(
     $content: $element,
   );
 
-  @include output.emit($processData) {
+  @include output.emit($createdLevel) {
     @content;
   }
 
@@ -59,11 +60,11 @@
 }
 
 @mixin modifier($modifier) {
-  $processData: process.start(
+  $createdLevel: process.start(
     $modifier: $modifier,
   );
 
-  @include output.emit($processData) {
+  @include output.emit($createdLevel) {
     @content;
   }
 
@@ -71,13 +72,235 @@
 }
 
 @mixin element($element) {
-  $processData: process.start(
+  $createdLevel: process.start(
     $element: $element,
   );
 
-  @include output.emit($processData) {
+  @include output.emit($createdLevel) {
     @content;
   }
 
   $void: process.end();
 }
+
+@mixin extra($extra) {
+  $createdLevel: process.start(
+    $extra: $extra,
+  );
+
+  @include output.emit($createdLevel) {
+    @content;
+  }
+
+  $void: process.end();
+}
+
+@mixin custom($selector) {
+  $createdLevel: process.start(
+    $custom: $selector,
+  );
+
+  @include output.emit($createdLevel) {
+    @content;
+  }
+
+  $void: process.end();
+}
+
+// SPECIAL CASES / HELPERS
+
+@mixin if-block-content-allowed() {
+  @include custom(' ');
+}
+
+/// ? needed?
+@mixin emitRoot($list) {
+  @include custom(' ');
+}
+
+// a, b, c
+@mixin selector-listx($list) {
+  $selector: '';
+
+  @each $item in $list {
+    $tempLevel: process.create-process-level(
+      $ARGS_MAP: $item,
+    );
+    $levelSelector: levels.get-level-selector($tempLevel);
+
+    @if $levelSelector {
+      $selector: '#{$selector}#{$levelSelector},';
+    }
+  }
+
+  #{$selector} {
+    @content;
+  }
+}
+
+@mixin selector-list($list) {
+  $currentSelector: process.get-current-selector();
+  $selector: '';
+
+  @each $item in $list {
+    $tempLevel: process.create-process-level(
+      $ARGS_MAP: $item,
+    );
+    $levelSelector: levels.get-level-selector($tempLevel);
+
+    @if $levelSelector {
+      $selector: '#{$selector}#{$levelSelector},';
+    }
+  }
+
+  $newLevel: process.create-process-level(
+    $custom: '#temp_custom_selector',
+  );
+  $newLevel: levels.set-level-selector($newLevel, $selector);
+  $newLevel: levels.set-level-emit-at-root($newLevel, false);
+  $void: globals.add-global-bem-level($newLevel);
+
+  @include output.emit($newLevel) {
+    @content;
+  }
+
+  $void: process.end();
+}
+
+/// https://sass-lang.com/documentation/modules/selector/#nest
+@mixin nest() {
+  $newLevel: process.create-process-level(
+    $directive: 'nest',
+  );
+  $newLevel: levels.set-level-emit-at-root($newLevel, false);
+  $void: globals.add-global-bem-level($newLevel);
+
+  @include output.emit($newLevel) {
+    @content;
+  }
+
+  $void: process.end();
+}
+
+@mixin linked-entities($typeAndName, $separator, $args...) {
+  $currentLevel: process.get-current-level();
+  $currentLevelSelector: levels.get-level-selector($currentLevel);
+  $closest: levels.find-closest-in-current($args...);
+  $type: map.get($typeAndName, 'type');
+  $name: map.get($typeAndName, 'name');
+  $void: testHelpers.inspect('CLOSEST', $closest);
+
+  @if $closest and $type {
+    $closestSelector: levels.get-level-selector($closest);
+    $ARGS_MAP: helpers.create-empty-map();
+    $ARGS_MAP: map.set($ARGS_MAP, $type, $name);
+    $newLevel: process.create-process-level(
+      $ARGS_MAP: $ARGS_MAP,
+    );
+    $selector: selectors.create-selector($closestSelector, $type, $name, globals.get-global-bem-config());
+    $newLevel: levels.set-level-selector($newLevel, '#{$currentLevelSelector}#{$separator}#{$selector}');
+    $void: globals.add-global-bem-level($newLevel);
+    $void: testHelpers.inspect('newLevel', $newLevel);
+
+    /// depth is wrong. (depends on separator)
+    /// parent is kind of wrong (depends on separator)
+    @include output.emit($newLevel) {
+      @content;
+    }
+
+    $void: process.end();
+  }
+}
+
+@mixin compound-entity($args...) {
+  @include linked-entities($separator: '', $args...) {
+    @content;
+  }
+}
+
+@mixin descendant-entity($args...) {
+  @include linked-entities($separator: ' ', $args...) {
+    @content;
+  }
+}
+
+// to create .hds-myBlock--mod.hds-myBlock--compoundBlock
+@mixin compound-block-modifier($modifier, $block: true) {
+  $typeAndName: (
+    'type': 'modifier',
+    'name': $modifier,
+  );
+
+  @include compound-entity($typeAndName, $block: $block) {
+    @content;
+  }
+}
+
+// modifier.modifier__element should never happen!
+// modifier .modifier__element
+@mixin descendant-modifier-element($element, $modifier: true) {
+  $typeAndName: (
+    'type': 'element',
+    'name': $element,
+  );
+
+  @include descendant-entity($typeAndName, $modifier: $modifier) {
+    @content;
+  }
+}
+
+@mixin block-element($element, $block: true) {
+  $typeAndName: (
+    'type': 'element',
+    'name': $element,
+  );
+
+  @include descendant-entity($typeAndName, $block: $block) {
+    @content;
+  }
+}
+
+// shorthand for custom(' #{$selector}')
+// can also be used to add new child
+@mixin descendant($selector) {
+  @include custom(' #{$selector}') {
+    @content;
+  }
+}
+
+// shorthand for custom('.#{$selector}')
+@mixin class($selector) {
+  @include custom('.#{$selector}') {
+    @content;
+  }
+}
+
+// find and repeat closest type:name
+@mixin repeat($args...) {
+  $closest: levels.find-closest-in-current($args...);
+
+  @if $closest {
+    $selector: levels.get-level-selector($closest);
+
+    @include custom($selector) {
+      @content;
+    }
+  }
+}
+
+// find closest type:name and repeat with replaced selector
+@mixin repeat-with-replace($original, $replacement, $args...) {
+  $closest: levels.find-closest-in-current($args...);
+
+  @if $closest {
+    $selector: levels.get-level-selector($closest);
+    $editedSelector: helpers.replace-string($selector, $original, $replacement);
+
+    @include custom($editedSelector) {
+      @content;
+    }
+  }
+}
+
+/// https://sass-lang.com/documentation/modules/selector/#extend
+/// https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_selectors/Selectors_and_combinators#combinators

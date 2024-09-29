@@ -66,6 +66,16 @@ $GLOBAL_BEM_OBJECT: null;
   @return map.get($GLOBAL_BEM_OBJECT, 'levels');
 }
 
+@function set-global-bem-levels($levels) {
+  @return map.set($GLOBAL_BEM_OBJECT, 'levels', $levels);
+}
+
+@function replace-global-bem-level($replacee, $index) {
+  $newLevels: helpers.replace-list-item(get-global-bem-levels(), $replacee, $index);
+
+  @return $newLevels;
+}
+
 @function get-global-bem-rules() {
   @return map.get($GLOBAL_BEM_OBJECT, 'rules');
 }

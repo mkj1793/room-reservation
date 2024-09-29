@@ -82,10 +82,10 @@
     'all': if($hasOthersThanAll, false, $all),
   );
 
-  @debug '####';
-  @debug meta.inspect($elements);
-  @debug meta.inspect($modifiers);
-  @debug '####';
+  /// debug '####';
+  /// debug meta.inspect($elements);
+  /// debug meta.inspect($modifiers);
+  /// debug '####';
   @return $rules;
 }
 

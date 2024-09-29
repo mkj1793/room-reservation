@@ -1,10 +1,15 @@
 /* stylelint-disable scss/function-no-unknown */
 @use "sass:map";
+@use "sass:selector";
 @use './globals.scss' as globals;
 
 @function create-selector($initial, $type, $name, $config) {
   $selector: $initial;
   $prefix: null;
+
+  @if $type == 'custom' {
+    @return '#{$selector}#{$name}';
+  }
 
   @if $type == 'block' {
     $blockPrefix: globals.get-block-prefix($config);
@@ -39,4 +44,8 @@
   }
 
   @return $selector;
+}
+
+@function replace-selector($selector, $original, $replacement) {
+  @return selector.replace($selector, $original, $replacement);
 }

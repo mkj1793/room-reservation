@@ -2,6 +2,7 @@
 @use "sass:map";
 @use "sass:meta";
 @use './globals.scss' as globals;
+@use './test-helpers.scss' as testHelpers;
 @use './helpers.scss' as helpers;
 @use './rules.scss' as rules;
 @use './selectors.scss' as selectors;
@@ -24,10 +25,10 @@
   $parentDepth: if($parent, map.get($parent, 'depth'), -1);
   $parentIsContentOnly: if($parent, map.get($parent, 'contentOnly'), false);
   $depth: if($parentIsContentOnly, $parentDepth, $parentDepth + 1);
-  $levelProps: helpers.get-map-data-with-value(helpers.arg-list-to-map($args...));
+  $levelProps: helpers.get-map-data-with-value(helpers.get-arg-map-or-arg-list-as-map($args...));
 
   @if not $levelProps {
-    @return (depth: -1, $type: null, $name: null, $parent: null);
+    @return ('depth': -1, 'type': null, 'name': null, 'parent': null);
   }
 
   $type: map.get($levelProps, 'key');
@@ -41,12 +42,21 @@
   $parentAllowed: if($parent, map.get($parent, 'isAllowed'), true);
   $isAllowed: $parentAllowed and is-level-allowed-in-rules($ruleMap, $level);
   $contentOnly: $isAllowed and is-level-content-only($level);
-  $selector: $isAllowed and not $contentOnly and create-level-selector($config, $level);
+  $selector: null;
+  $emitAtRoot: if($parent, should-level-emit-at-root($parent), true);
+  $level: map.set($level, 'isAllowed', $isAllowed);
+  $level: map.set($level, 'contentOnly', $contentOnly);
+  $level: map.set($level, 'emitAtRoot', $emitAtRoot);
+
+  @if $isAllowed and not $contentOnly {
+    $selector: create-level-selector($config, $level);
+  } @else if $isAllowed and is-extra-level($level) and $parent {
+    $selector: get-level-selector($parent);
+  }
+
+  $level: map.set($level, 'selector', $selector);
 
   ///
-  $level: map.set($level, 'isAllowed', $isAllowed);
-  $level: map.set($level, 'selector', $selector);
-  $level: map.set($level, 'contentOnly', $contentOnly);
 
   @return $level;
 }
@@ -73,11 +83,16 @@
 
 @function create-level-selector($config, $level) {
   $initial: get-level-parent-selector($config, $level);
+  $emitAtRoot: should-level-emit-at-root($level);
   $type: get-level-type($level);
   $name: get-level-name($level);
 
   @if helpers.can-value-be-falsy($name) and is-block-type($type) {
     $name: globals.get-block-name($config);
+  }
+
+  @if not $emitAtRoot {
+    $initial: '&';
   }
 
   @return selectors.create-selector($initial, $type, $name, $config);
@@ -89,6 +104,28 @@
   @while $parent {
     @if get-level-type($parent) == $type {
       @return $parent;
+    }
+
+    $parent: get-level-parent($parent);
+  }
+
+  @return null;
+}
+
+// get-closest is obsolete with this
+@function get-closest-with-name-or-type($level, $type, $name: null, $startFromLevel: false) {
+  $nameRequired: helpers.can-value-be-truthy($name) and $name != true;
+  $parent: if($startFromLevel, $level, get-level-parent($level));
+
+  @while $parent {
+    @if get-level-type($parent) == $type {
+      @if $nameRequired {
+        @if get-level-name() == $name {
+          @return $parent;
+        }
+      } @else {
+        @return $parent;
+      }
     }
 
     $parent: get-level-parent($parent);
@@ -133,7 +170,7 @@
 
     @return false;
   } @else if is-content-type($type) {
-    $closestEntity: get-closest-entity();
+    $closestEntity: get-closest-entity($level);
 
     @if not $closestEntity {
       @return true;
@@ -154,13 +191,38 @@
     }
   } @else if is-extra-type($type) {
     @return rules.is-extra-allowed($ruleMap, $name);
+  } @else if is-custom-type($type) or is-directive-type($type) {
+    @return true;
   }
 
   @return false;
 }
 
+@function find-closest-in-current($args...) {
+  $entityProps: helpers.get-map-data-with-value(helpers.get-arg-map-or-arg-list-as-map($args...));
+
+  @if not $entityProps {
+    @return null;
+  }
+
+  $type: map.get($entityProps, 'key');
+  $name: map.get($entityProps, 'value');
+
+  @if $type {
+    $levels: globals.get-global-bem-levels();
+    $currentLevel: get-current-level($levels);
+    $targetLevel: get-closest-with-name-or-type($currentLevel, $type, $name, $startFromLevel: true);
+
+    @return if($targetLevel, $targetLevel, null);
+  }
+
+  @return null;
+}
+
 @function is-level-content-only($level) {
-  @return false;
+  // if root and root-selector
+  // if extra
+  @return is-content-level($level) or is-extra-level($level) or is-directive-level($level);
 }
 
 @function get-level-type($level) {
@@ -169,6 +231,10 @@
 
 @function get-level-name($level) {
   @return map.get($level, 'name');
+}
+
+@function set-level-name($level, $name) {
+  @return map.set($level, 'name', $name);
 }
 
 @function get-level-parent($level) {
@@ -183,8 +249,32 @@
   @return map.get($level, 'selector');
 }
 
+@function set-level-selector($level, $selector) {
+  @if is-custom-level($level) {
+    $void: set-level-name($level, $selector);
+  }
+
+  @return map.set($level, 'selector', $selector);
+}
+
+@function get-level-emit-at-root($level) {
+  @return map.get($level, 'emitAtRoot');
+}
+
+@function set-level-emit-at-root($level, $emitAtRoot) {
+  @return map.set($level, 'emitAtRoot', $emitAtRoot);
+}
+
+@function should-level-emit-at-root($level) {
+  @return get-level-emit-at-root($level) != false;
+}
+
 @function is-level-allowed($level) {
-  @return map.get($level, 'isAllowed');
+  @return map.get($level, 'isAllowed') == true;
+}
+
+@function is-root-level($level) {
+  @return helpers.can-value-be-falsy(get-level-parent($level));
 }
 
 @function is-block-type($type) {
@@ -207,6 +297,14 @@
   @return $type == 'extra';
 }
 
+@function is-custom-type($type) {
+  @return $type == 'custom';
+}
+
+@function is-directive-type($type) {
+  @return $type == 'directive';
+}
+
 @function is-block-level($level) {
   @return is-block-type(get-level-type($level));
 }
@@ -220,9 +318,17 @@
 }
 
 @function is-content-level($level) {
-  @return is-block-type(get-level-type($level));
+  @return is-content-type(get-level-type($level));
 }
 
 @function is-extra-level($level) {
-  @return is-block-type(get-level-type($level));
+  @return is-extra-type(get-level-type($level));
+}
+
+@function is-custom-level($level) {
+  @return is-custom-type(get-level-type($level));
+}
+
+@function is-directive-level($level) {
+  @return is-directive-type(get-level-type($level));
 }

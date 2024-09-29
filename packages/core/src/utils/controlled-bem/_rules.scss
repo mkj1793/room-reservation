@@ -72,8 +72,6 @@
   $argModifiers: map.get($args, 'modifiers');
   $modifiers: value-to-map($argModifiers);
 
-  /// debug 'argModifiers #{$argModifiers}';
-
   @if helpers.is-value-map($argModifiers) {
     @each $modifierName, $modifierValue in $argModifiers {
       /// $modifiers: map.set($modifiers, $modifierName, value-to-map($modifierValue));

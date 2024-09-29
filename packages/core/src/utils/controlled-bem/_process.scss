@@ -1,10 +1,9 @@
 /* stylelint-disable scss/function-no-unknown */
+@use "sass:meta";
 @use './globals.scss' as globals;
 @use './levels.scss' as levels;
 @use './rules.scss' as rules;
 @use './helpers.scss' as helpers;
-
-$globalRules: null;
 
 @function start($args...) {
   $newLevel: create-process-level($args...);
@@ -13,6 +12,7 @@ $globalRules: null;
   @return $newLevel;
 }
 
+/// use get-current-state?
 @function create-process-level($args...) {
   $rules: globals.get-global-bem-rules();
   $levels: globals.get-global-bem-levels();
@@ -25,4 +25,29 @@ $globalRules: null;
 
 @function end() {
   @return globals.remove-current-global-bem-level();
+}
+
+@function get-current-state() {
+  $rules: globals.get-global-bem-rules();
+  $levels: globals.get-global-bem-levels();
+  $config: globals.get-global-bem-config();
+  $currentLevel: levels.get-current-level($levels);
+
+  @return ('rules': $rules, 'levels': $levels, 'config': $config, 'currentLevel': $currentLevel);
+}
+
+@function get-current-level() {
+  $levels: globals.get-global-bem-levels();
+
+  @return levels.get-current-level($levels);
+}
+
+@function get-current-selector() {
+  $currentLevel: get-current-level();
+
+  @if $currentLevel {
+    @return levels.get-level-selector($currentLevel);
+  }
+
+  @return globals.get-root-selector();
 }

@@ -414,17 +414,17 @@ $elementDelimeter: '__';
   $all: map.get($argsAsMap, 'all');
   $hasOthersThanAll: false;
 
-  /// @debug map.keys($argsAsMap);
+  /// debug map.keys($argsAsMap);
 
   $parent: &;
 
-  /// @debug 'parent:#{$parent}';
+  /// debug 'parent:#{$parent}';
 
   @if $parent {
     $hasRoot: true;
   }
 
-  /// @debug 'hasRoot1: #{$hasRoot}';
+  /// debug 'hasRoot1: #{$hasRoot}';
 
   @each $type, $value in $argsAsMap {
     $prefix: null;
@@ -439,19 +439,19 @@ $elementDelimeter: '__';
       }
 
       @if $typeOf == 'string' {
-        /// @debug '#{$type}==#{$value}';
+        /// debug '#{$type}==#{$value}';
         $combinedPartialName: '#{$type}#{$elementDelimeter}#{$value}';
         $partials: map.set($partials, $combinedPartialName, true);
         $partials: map.set($partials, $type, $value);
       } @else if $typeOf == 'bool' and $value {
-        /// @debug '#{$type}==#{$value}';
+        /// debug '#{$type}==#{$value}';
         $truthy: map.set($truthy, $type, $value);
       } @else if $typeOf == 'map' {
         @each $elementName, $elementValue in $value {
           $combinedPartialName: '#{$type}#{$elementDelimeter}#{$elementName}';
           $partials: map.set($partials, $type, true);
 
-          /// @debug 'el #{$combinedPartialName}==#{$elementValue}';
+          /// debug 'el #{$combinedPartialName}==#{$elementValue}';
           $partials: map.set($partials, $combinedPartialName, $elementValue);
         }
       }
@@ -471,12 +471,12 @@ $elementDelimeter: '__';
     'hasRoot': $hasRoot,
   );
 
-  /// @debug '####';
-  /// @debug meta.inspect($rules);
-  /// @debug meta.inspect($truthy);
-  // @debug meta.inspect($partials);
+  /// debug '####';
+  /// debug meta.inspect($rules);
+  /// debug meta.inspect($truthy);
+  // debug meta.inspect($partials);
 
-  /// @debug '####';
+  /// debug '####';
   @return $rules;
 }
 
@@ -488,7 +488,7 @@ $elementDelimeter: '__';
   $truthy: map.get($rules, 'truthy');
   $all: map.get($truthy, 'all') == true;
 
-  /// @debug 'modifierOrBase::#{$modifierOrBase}';
+  /// debug 'modifierOrBase::#{$modifierOrBase}';
   @if $all {
     @return true;
   }
@@ -496,7 +496,7 @@ $elementDelimeter: '__';
   @if $modifierOrBase {
     $value: map.get($truthy, $modifierOrBase) or map.get($partials, $modifierOrBase);
 
-    /// @debug 'value modifierOrBase::#{$modifierOrBase}==#{$value}';
+    /// debug 'value modifierOrBase::#{$modifierOrBase}==#{$value}';
     @if meta.type-of($value) == 'bool' and $value {
       @return true;
     }
@@ -505,12 +505,12 @@ $elementDelimeter: '__';
       @return true;
     }
 
-    /// @debug 'el test::#{$element}==#{$value}';
+    /// debug 'el test::#{$element}==#{$value}';
     @if $element {
       $combinedPartialName: '#{$modifierOrBase}#{$elementDelimeter}#{$element}';
       $value: map.get($partials, $combinedPartialName);
 
-      /// @debug 'value c combinedPartialName::#{$combinedPartialName}==#{$value}';
+      /// debug 'value c combinedPartialName::#{$combinedPartialName}==#{$value}';
       @if $value {
         @return $value;
       }
