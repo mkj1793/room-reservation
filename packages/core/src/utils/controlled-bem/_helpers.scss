@@ -50,6 +50,10 @@
   @return meta.type-of($value) == 'bool';
 }
 
+@function is-value-string($value) {
+  @return meta.type-of($value) == 'string';
+}
+
 @function is-value-null($value) {
   @return meta.type-of($value) == 'null';
 }

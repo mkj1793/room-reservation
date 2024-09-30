@@ -1,6 +1,15 @@
 /* stylelint-disable scss/function-no-unknown */
 @use 'sass-true' as *;
 @use './exports' as *;
+@use "sass:meta";
+
+@function custom-selector($ruleMap, $config, $currentLevel) {
+  @return '.my-custom-selector';
+}
+
+@function custom-level($ruleMap, $config, $currentLevel) {
+  @return ('type': 'element', 'name': 'custom-level', 'selector': '.my-custom-level-selector');
+}
 
 @mixin testSCSS($elements: true, $modifiers: true, $extras: true) {
   $void: init-controlled-bem(
@@ -26,6 +35,34 @@
 
       li {
         --hds-test-another-element-li: var(--var-li);
+      }
+
+      header {
+        nav {
+          @include nest {
+            @include custom('.nav') {
+              --hds-test-header-nav-custom: var(--var-header-nav-custom);
+            }
+          }
+        }
+      }
+
+      @include modifier('dark') {
+        --hds-test-another-element-dark: var(--var-another-element-dark);
+
+        @include custom(':focus') {
+          --hds-test-another-element-dark: var(--var-another-element-dark);
+        }
+
+        @include selector-list((('custom': ':focus'), ('custom': ':hover'))) {
+          --hds-test-another-element-dark-focus: var(--var-another-element-dark-focus);
+          --hds-test-another-element-dark-hover: var(--var-another-element-dark-hover);
+        }
+
+        &:focus,
+        &:hover {
+          --hds-test-another-element-dark-hover: var(--var-another-element-dark-hover);
+        }
       }
     }
 
@@ -152,6 +189,14 @@
     @include repeat-with-replace($original: '-test', $replacement: '-replacement', $block: true) {
       --hds-replacement: var(--var-replacement);
     }
+
+    @include create-custom-selector(meta.get-function('custom-selector')) {
+      --hds-custom-selector: var(--var-custom-selector);
+    }
+
+    @include create-custom-level(meta.get-function('custom-level')) {
+      --hds-custom-level: var(--var-custom-level);
+    }
   }
 }
 
@@ -159,7 +204,7 @@
   @include it('With a defined elements, only rules in it are outputted.') {
     @include assert {
       @include output {
-        @include testSCSS($extras: false);
+        @include testSCSS;
       }
 
       @include expect {
@@ -180,6 +225,29 @@
 
           .hds-test__another-element li {
             --hds-test-another-element-li: var(--var-li);
+          }
+
+          .hds-test__another-element header nav.nav {
+            --hds-test-header-nav-custom: var(--var-header-nav-custom);
+          }
+
+          .hds-test__another-element--dark {
+            --hds-test-another-element-dark: var(--var-another-element-dark);
+          }
+
+          .hds-test__another-element--dark:focus {
+            --hds-test-another-element-dark: var(--var-another-element-dark);
+          }
+
+          .hds-test__another-element--dark:focus,
+          .hds-test__another-element--dark:hover {
+            --hds-test-another-element-dark-focus: var(--var-another-element-dark-focus);
+            --hds-test-another-element-dark-hover: var(--var-another-element-dark-hover);
+          }
+
+          .hds-test__another-element--dark:focus,
+          .hds-test__another-element--dark:hover {
+            --hds-test-another-element-dark-hover: var(--var-another-element-dark-hover);
           }
 
           .hds-test--modifier {
@@ -206,31 +274,39 @@
             --hds-test-block-element-ul: var(--var-ul);
           }
 
-          .hds-test .hds-test--hello,
-          .hds-test .hds-test--hello2,
-          .hds-test .hds-test__elem,
-          .hds-test .hds-test div {
+          .hds-test--modifier2 {
+            --hds-test-modifier: var(--var-modifier);
+          }
+
+          .hds-test--modifier2 div.za span {
+            --hds-test-modifier-element: var(--var-modifier-element);
+          }
+
+          .hds-test--hello,
+          .hds-test--hello2,
+          .hds-test__elem,
+          .hds-test div {
             --hds-selector-list-span: var(--var-selector-list);
           }
 
-          .hds-test .hds-test--hello span,
-          .hds-test .hds-test--hello2 span,
-          .hds-test .hds-test__elem span,
-          .hds-test .hds-test div span {
+          .hds-test--hello span,
+          .hds-test--hello2 span,
+          .hds-test__elem span,
+          .hds-test div span {
             --hds-selector-list-span: var(--var-selector-list-span);
           }
 
-          .hds-test .hds-test--hello p.extra,
-          .hds-test .hds-test--hello2 p.extra,
-          .hds-test .hds-test__elem p.extra,
-          .hds-test .hds-test div p.extra {
+          .hds-test--hello p.extra,
+          .hds-test--hello2 p.extra,
+          .hds-test__elem p.extra,
+          .hds-test div p.extra {
             --hds-selector-list-p: var(--var-selector-list-p);
           }
 
-          .hds-test .hds-test--hello p.extra__awesome,
-          .hds-test .hds-test--hello2 p.extra__awesome,
-          .hds-test .hds-test__elem p.extra__awesome,
-          .hds-test .hds-test div p.extra__awesome {
+          .hds-test--hello p.extra__awesome,
+          .hds-test--hello2 p.extra__awesome,
+          .hds-test__elem p.extra__awesome,
+          .hds-test div p.extra__awesome {
             --hds-selector-list-p-awesome: var(--var-selector-list-p-awesome);
           }
 
@@ -290,6 +366,14 @@
 
           .hds-test.hds-replacement {
             --hds-replacement: var(--var-replacement);
+          }
+
+          .hds-test.my-custom-selector {
+            --hds-custom-selector: var(--var-custom-selector);
+          }
+
+          .hds-test.my-custom-level-selector {
+            --hds-custom-level: var(--var-custom-level);
           }
         }
       }

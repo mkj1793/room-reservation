@@ -45,7 +45,3 @@
 
   @return $selector;
 }
-
-@function replace-selector($selector, $original, $replacement) {
-  @return selector.replace($selector, $original, $replacement);
-}

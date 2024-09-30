@@ -1,3 +1,4 @@
+/* stylelint-disable scss/dollar-variable-pattern */
 /* stylelint-disable scss/function-no-unknown */
 @use "sass:map";
 @use "sass:meta";
@@ -6,6 +7,10 @@
 @use './helpers.scss' as helpers;
 @use './rules.scss' as rules;
 @use './selectors.scss' as selectors;
+
+$EMIT_TARGET_ROOT: 'EMIT_TARGET_ROOT';
+$EMIT_TARGET_NESTED: 'EMIT_TARGET_NESTED';
+$EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
 
 /// block: depth:0, selector: .hds-block, parent: null,
 ///   base content:         depth:0 or 1?,  parent: block     selector: '',                             contentOnly:true,
@@ -37,16 +42,24 @@
   @return ('parent': $parent, 'type': $type, 'depth': $depth, 'name': $name);
 }
 
+@function resolve-emit-target($parent) {
+  @if $parent and not should-level-children-emit-at-root($parent) {
+    @return $EMIT_TARGET_NESTED;
+  }
+
+  @return $EMIT_TARGET_ROOT;
+}
+
 @function append-level-rules($ruleMap, $config, $level) {
   $parent: map.get($level, 'parent');
   $parentAllowed: if($parent, map.get($parent, 'isAllowed'), true);
   $isAllowed: $parentAllowed and is-level-allowed-in-rules($ruleMap, $level);
   $contentOnly: $isAllowed and is-level-content-only($level);
   $selector: null;
-  $emitAtRoot: if($parent, should-level-emit-at-root($parent), true);
+  $emitTarget: resolve-emit-target($parent);
   $level: map.set($level, 'isAllowed', $isAllowed);
   $level: map.set($level, 'contentOnly', $contentOnly);
-  $level: map.set($level, 'emitAtRoot', $emitAtRoot);
+  $level: map.set($level, 'emitTarget', $emitTarget);
 
   @if $isAllowed and not $contentOnly {
     $selector: create-level-selector($config, $level);
@@ -83,7 +96,7 @@
 
 @function create-level-selector($config, $level) {
   $initial: get-level-parent-selector($config, $level);
-  $emitAtRoot: should-level-emit-at-root($level);
+  $shouldEmitAtRoot: should-level-emit-at-root($level);
   $type: get-level-type($level);
   $name: get-level-name($level);
 
@@ -91,7 +104,7 @@
     $name: globals.get-block-name($config);
   }
 
-  @if not $emitAtRoot {
+  @if not $shouldEmitAtRoot {
     $initial: '&';
   }
 
@@ -229,6 +242,20 @@
   @return map.get($level, 'type');
 }
 
+@function get-level-selector-override($level) {
+  $type: get-level-type($level);
+
+  @if is-modifier-level($level) or is-element-level($level) {
+    $ruleMap: globals.get-global-bem-rules();
+    $type: get-level-type($level);
+    $name: get-level-name($level);
+
+    @return rules.get-selector-override-value($ruleMap, $type, $name);
+  }
+
+  @return null;
+}
+
 @function get-level-name($level) {
   @return map.get($level, 'name');
 }
@@ -241,8 +268,16 @@
   @return map.get($level, 'parent');
 }
 
+@function set-level-parent($level, $parent) {
+  @return map.set($level, 'parent', $parent);
+}
+
 @function get-level-depth($level) {
   @return map.get($level, 'depth');
+}
+
+@function set-level-depth($level, $depth) {
+  @return map.set($level, 'depth', $depth);
 }
 
 @function get-level-selector($level) {
@@ -257,16 +292,36 @@
   @return map.set($level, 'selector', $selector);
 }
 
-@function get-level-emit-at-root($level) {
-  @return map.get($level, 'emitAtRoot');
+@function get-level-emit-target($level) {
+  @return map.get($level, 'emitTarget');
 }
 
-@function set-level-emit-at-root($level, $emitAtRoot) {
-  @return map.set($level, 'emitAtRoot', $emitAtRoot);
+@function set-level-emit-target($level, $emitTarget) {
+  @return map.set($level, 'emitTarget', $emitTarget);
+}
+
+@function set-level-emit-target-to-nested-children($level) {
+  @return set-level-emit-target($level, $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN);
+}
+
+@function set-level-emit-target-to-root($level) {
+  @return set-level-emit-target($level, $EMIT_TARGET_ROOT);
+}
+
+@function set-level-emit-target-to-nested($level) {
+  @return set-level-emit-target($level, $EMIT_TARGET_NESTED);
 }
 
 @function should-level-emit-at-root($level) {
-  @return get-level-emit-at-root($level) != false;
+  $target: get-level-emit-target($level);
+
+  @return $target == $EMIT_TARGET_ROOT or $target == $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN;
+}
+
+@function should-level-children-emit-at-root($level) {
+  $target: get-level-emit-target($level);
+
+  @return $target != $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN and $target != $EMIT_TARGET_NESTED;
 }
 
 @function is-level-allowed($level) {
@@ -310,11 +365,11 @@
 }
 
 @function is-modifier-level($level) {
-  @return is-block-type(get-level-type($level));
+  @return is-modifier-type(get-level-type($level));
 }
 
 @function is-element-level($level) {
-  @return is-block-type(get-level-type($level));
+  @return is-element-type(get-level-type($level));
 }
 
 @function is-content-level($level) {

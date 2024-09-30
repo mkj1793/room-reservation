@@ -199,6 +199,26 @@
   @return helpers.can-value-be-falsy(map.get($elements, $ALLOW_BASE_CONTENT));
 }
 
+@function get-selector-override-value($ruleMap, $type, $name) {
+  $namedMap: null;
+
+  @if $type == 'modifier' {
+    $namedMap: get-modifiers($ruleMap);
+  } @else if $type == 'element' {
+    $namedMap: get-elements($ruleMap);
+  } @else {
+    @return null;
+  }
+
+  $value: get-rule-map-value($namedMap, $name);
+
+  @if helpers.is-value-string($value) {
+    @return $value;
+  }
+
+  @return null;
+}
+
 @function get-modifiers($ruleMap) {
   @return map.get($ruleMap, 'modifiers');
 }
