@@ -4,7 +4,7 @@
 @use './globals.scss' as globals;
 
 @function create-selector($initial, $type, $name, $config) {
-  $selector: $initial;
+  $selector: '';
   $prefix: null;
 
   @if $type == 'custom' {
@@ -40,7 +40,7 @@
 
   /* stylelint-disable-next-line scss/at-if-no-null */
   @if $prefix != null {
-    $selector: '#{$selector}#{$prefix}#{$name}';
+    $selector: '#{$prefix}#{$name}';
   }
 
   @return $selector;

@@ -143,19 +143,29 @@
 
     $levelSelector: levels.get-level-selector($tempLevel);
 
+    /// debug '$levelSelector: #{$levelSelector}';
+
     @if $levelSelector {
-      $selector: '#{$selector}#{$levelSelector},';
+      @if $selector != '' {
+        $selector: '#{$selector},&#{$levelSelector}';
+      } @else {
+        $selector: '&#{$levelSelector}';
+      }
     }
   }
 
   $newLevel: process.create-process-level(
-    $custom: '#temp_custom_selector',
+    $custom: '> .will-be-overridden',
   );
   $newLevel: levels.set-level-selector($newLevel, $selector);
 
   // children of this entity should emit nested css
-  $newLevel: levels.set-level-emit-target-to-nested-children($newLevel);
+  $newLevel: levels.set-level-emit-target-to-nested($newLevel);
+
+  //$newLevel: levels.set-level-emit-target-to-parent-selector($newLevel);
   $void: globals.add-global-bem-level($newLevel);
+
+  @debug 'list selector: #{$selector}';
 
   @include output.emit($newLevel) {
     @content;
@@ -190,14 +200,17 @@
   $name: map.get($typeAndName, 'name');
 
   @if $closest and $type {
-    $closestSelector: levels.get-level-selector($closest);
+    ///$closestSelector: levels.get-level-selector($closest);
+    $closestSelector: levels.collect-parent-entity-selectors($closest);
     $ARGS_MAP: helpers.create-empty-map();
     $ARGS_MAP: map.set($ARGS_MAP, $type, $name);
     $newLevel: process.create-process-level(
       $ARGS_MAP: $ARGS_MAP,
     );
     $selector: selectors.create-selector($closestSelector, $type, $name, globals.get-global-bem-config());
-    $newLevel: levels.set-level-selector($newLevel, '#{$currentLevelSelector}#{$separator}#{$selector}');
+    $prefix: if($separator == '', '&', '');
+    $newLevel: levels.set-level-selector($newLevel, '#{$prefix}#{$closestSelector}#{$selector}');
+    $newLevel: levels.set-level-emit-target-to-nested($newLevel);
     $void: globals.add-global-bem-level($newLevel);
 
     /// depth is wrong. (depends on separator)
@@ -277,10 +290,16 @@
 
   @if $closest {
     $selector: levels.get-level-selector($closest);
+    $createdLevel: process.start(
+      $custom: $selector,
+    );
+    $createdLevel: levels.set-level-emit-target-to-nested($createdLevel);
 
-    @include custom($selector) {
+    @include output.emit($createdLevel) {
       @content;
     }
+
+    $void: process.end();
   }
 }
 

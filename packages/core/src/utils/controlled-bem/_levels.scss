@@ -8,6 +8,7 @@
 @use './rules.scss' as rules;
 @use './selectors.scss' as selectors;
 
+$EMIT_TARGET_PARENT_SELECTOR: 'EMIT_TARGET_PARENT_SELECTOR';
 $EMIT_TARGET_ROOT: 'EMIT_TARGET_ROOT';
 $EMIT_TARGET_NESTED: 'EMIT_TARGET_NESTED';
 $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
@@ -47,7 +48,11 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
     @return $EMIT_TARGET_NESTED;
   }
 
-  @return $EMIT_TARGET_ROOT;
+  @if $parent and not should-level-children-emit-at-root($parent) {
+    @return $EMIT_TARGET_NESTED;
+  }
+
+  @return $EMIT_TARGET_PARENT_SELECTOR;
 }
 
 @function append-level-rules($ruleMap, $config, $level) {
@@ -56,10 +61,18 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
   $isAllowed: $parentAllowed and is-level-allowed-in-rules($ruleMap, $level);
   $contentOnly: $isAllowed and is-level-content-only($level);
   $selector: null;
-  $emitTarget: resolve-emit-target($parent);
+  $isRoot: is-root-level($level);
+
+  @if $isRoot {
+    $level: set-level-emit-target-to-nested($level);
+  } @else {
+    $level: set-level-emit-target-to-parent-selector($level);
+  }
+
+  /// @debug 'isRoot: #{$isRoot}';
+
   $level: map.set($level, 'isAllowed', $isAllowed);
   $level: map.set($level, 'contentOnly', $contentOnly);
-  $level: map.set($level, 'emitTarget', $emitTarget);
 
   @if $isAllowed and not $contentOnly {
     $selector: create-level-selector($config, $level);
@@ -292,6 +305,23 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
   @return map.set($level, 'selector', $selector);
 }
 
+@function collect-parent-entity-selectors($level) {
+  $selector: get-level-selector($level);
+  $parent: get-level-parent($level);
+
+  @while $parent {
+    $levelSelector: get-level-selector($parent);
+
+    @if not is-level-content-only($parent) and helpers.can-value-be-truthy($levelSelector) {
+      $selector: '#{$levelSelector}#{$selector}';
+    }
+
+    $parent: get-level-parent($parent);
+  }
+
+  @return $selector;
+}
+
 @function get-level-emit-target($level) {
   @return map.get($level, 'emitTarget');
 }
@@ -308,6 +338,10 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
   @return set-level-emit-target($level, $EMIT_TARGET_ROOT);
 }
 
+@function set-level-emit-target-to-parent-selector($level) {
+  @return set-level-emit-target($level, $EMIT_TARGET_PARENT_SELECTOR);
+}
+
 @function set-level-emit-target-to-nested($level) {
   @return set-level-emit-target($level, $EMIT_TARGET_NESTED);
 }
@@ -322,6 +356,14 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
   $target: get-level-emit-target($level);
 
   @return $target != $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN and $target != $EMIT_TARGET_NESTED;
+}
+
+@function should-level-emit-with-parent-selector($level) {
+  @return get-level-emit-target($level) == $EMIT_TARGET_PARENT_SELECTOR;
+}
+
+@function should-level-emit-nested($level) {
+  @return get-level-emit-target($level) == $EMIT_TARGET_NESTED;
 }
 
 @function is-level-allowed($level) {
