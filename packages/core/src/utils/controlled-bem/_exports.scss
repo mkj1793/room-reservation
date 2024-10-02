@@ -18,13 +18,17 @@
   $rules: rules.rules-to-map($argMap);
   $levels: [];
   $blockName: map.get($argMap, 'block');
-  $config: (
-    'blockName': $blockName,
-    'rootSelector': $rootSelector,
-    'parent': $parent,
-    'blockPrefix': 'hds-',
-    'modifierDelimeter': '--',
-    'elementDelimeter': '__',
+  $configInArgs: map.get($argMap, 'config') or helpers.create-empty-map();
+  $config: map.merge(
+    (
+      'blockName': $blockName,
+      'rootSelector': $rootSelector,
+      'parent': $parent,
+      'blockPrefix': globals.$BLOCK-PREFIX,
+      'modifierDelimeter': globals.$MODIFIER-DELIMETER,
+      'elementDelimeter': globals.$ELEMENT-DELIMETER,
+    ),
+    $configInArgs
   );
 
   @return globals.init-global-bem($rules, $levels, $config);
@@ -162,10 +166,8 @@
   // children of this entity should emit nested css
   $newLevel: levels.set-level-emit-target-to-nested($newLevel);
 
-  //$newLevel: levels.set-level-emit-target-to-parent-selector($newLevel);
+  /// $newLevel: levels.set-level-emit-target-to-parent-selector($newLevel);
   $void: globals.add-global-bem-level($newLevel);
-
-  @debug 'list selector: #{$selector}';
 
   @include output.emit($newLevel) {
     @content;

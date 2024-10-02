@@ -204,7 +204,6 @@
       }
 
       @include expect {
-        /// at-root is required :(
         .hds-test {
           --hds-test: var(--var-base);
           --hds-test-content: var(--var-content);

@@ -8,8 +8,8 @@
   $shouldEmitNested: levels.should-level-emit-nested($level);
 
   /// debug 'emitTarget: #{levels.get-level-emit-target($level)}';
-  @debug 'selector: #{$selector}';
-  @debug 'shouldEmitNested: #{$shouldEmitNested}';
+  /// debug 'selector: #{$selector}';
+  /// debug 'shouldEmitNested: #{$shouldEmitNested}';
 
   /// debug 'selector #{$selector}';
 
