@@ -80,7 +80,7 @@ export const NumericStepper = () => {
         type: 'click',
       });
     };
-    return <Button onClick={onClick}>{children}</Button>;
+    return <Button onClick={onClick}>{children as string}</Button>;
   };
 
   const Error = () => {
@@ -234,7 +234,7 @@ export const Form = () => {
         type: 'click',
       });
     };
-    return <Button onClick={onClick}>{children}</Button>;
+    return <Button onClick={onClick}>{children as string}</Button>;
   };
 
   const Errors = () => {
