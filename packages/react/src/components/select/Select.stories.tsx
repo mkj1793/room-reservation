@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
-import { Group, SelectProps, Texts } from './types';
+import { Group, SelectProps, TextProvider, Texts, Option } from './types';
 import { IconLocation } from '../../icons';
 import { Select } from './Select';
 import { Button } from '../button/Button';
@@ -219,7 +219,16 @@ export const Singleselect = () => {
   const onChange: SelectProps['onChange'] = useCallback(() => {
     // track changes
   }, []);
-  return <Select options={options} onChange={onChange} icon={<IconLocation />} required texts={defaultTexts} />;
+  return (
+    <Select
+      options={options}
+      onChange={onChange}
+      icon={<IconLocation />}
+      required
+      texts={defaultTexts}
+      id="hds-select-component"
+    />
+  );
 };
 
 export const SingleselectWithGroups = () => {
@@ -589,4 +598,125 @@ export const VirtualizedSingleselectWithoutGroups = () => {
     // track changes
   }, []);
   return <Select options={createOptionsForVirtualization()} onChange={onChange} virtualize texts={defaultTexts} />;
+};
+
+export const FocusListenerExample = () => {
+  const [isFocused, setIsFocused] = useState(false);
+
+  const setIsFocusedInHook = useCallback(
+    (focusValue: boolean) => {
+      setIsFocused(focusValue);
+    },
+    [setIsFocused],
+  );
+
+  const bundledTextAndChanges = useMemo(() => {
+    const texts: Partial<Texts> = {
+      label: 'Select multiple fruits or vegetables',
+      placeholder: 'Choose three or more',
+      error: '',
+    };
+
+    const changeTracking: { selectedOptions: Option[] } = {
+      selectedOptions: [],
+    };
+
+    const textsAsFunction: TextProvider = (key) => {
+      const textFromObj = texts[key];
+      if (textFromObj) {
+        return textFromObj;
+      }
+
+      return '';
+    };
+    const onChange: SelectProps['onChange'] = (selectedOptions) => {
+      changeTracking.selectedOptions = selectedOptions;
+    };
+
+    return {
+      texts,
+      textsAsFunction,
+      onChange,
+      changeTracking,
+    };
+  }, []);
+
+  const onFocus: SelectProps['onFocus'] = useCallback(async () => {
+    bundledTextAndChanges.texts.error = '';
+    setIsFocusedInHook(true);
+  }, []);
+  const onBlur: SelectProps['onBlur'] = useCallback(async () => {
+    if (!bundledTextAndChanges.changeTracking.selectedOptions.length) {
+      bundledTextAndChanges.texts.error = 'Select something';
+    }
+    setIsFocusedInHook(false);
+  }, []);
+  const onChange: SelectProps['onChange'] = useCallback(() => {
+    // track changes
+  }, []);
+
+  return (
+    <>
+      <style>
+        {`
+          .focused,
+          .blurred {
+            padding: 10px;
+          }
+
+          .focused {
+            background-color: #defcde;
+          }
+
+          .blurred {
+            background-color: #ececec;
+          }
+
+          .indicators {
+            display: flex;
+            flex-direction: column;
+            margin: 20px 0;
+
+            .indicator {
+              padding-left: 20px;
+              position: relative;
+            }
+
+            .indicator:before {
+              background: #defcde;
+              content: ' ';
+              display: block;
+              height: 10px;
+              left: 0;
+              position: absolute;
+              top: 5px;
+              width: 10px;
+            }
+
+            .indicator.blurIndicator:before {
+              background: #ececec;
+            }
+          }
+
+        `}
+      </style>
+      <div className={isFocused ? 'focused' : 'blurred'}>
+        <Select
+          options={createOptionsForVirtualization()}
+          onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          virtualize
+          multiSelect
+          icon={<IconLocation />}
+          texts={defaultTextsForMultiSelect}
+        />
+      </div>
+      <div className="indicators">
+        <div className="indicator">Focused</div>
+        <div className="indicator blurIndicator">Blurred</div>
+      </div>
+      <Button>This is just a focus target</Button>
+    </>
+  );
 };

@@ -216,6 +216,6 @@ export const waitForElementFocus = async (elementGetter: () => ElementGetterResu
   waitFor(() => {
     const target = elementGetter();
     if (target) {
-      expect(getActiveElement(target)).toEqual(target);
+      expect(getActiveElement(target) === target).toBeTruthy();
     }
   });
