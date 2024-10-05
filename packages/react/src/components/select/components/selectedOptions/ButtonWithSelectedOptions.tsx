@@ -158,7 +158,9 @@ export function ButtonWithSelectedOptions() {
       </span>
     ))
   ) : (
-    <span className={optionClassName}>{placeholder}</span>
+    <span className={optionClassName} data-testid="placeholder">
+      {placeholder}
+    </span>
   );
 
   useLayoutEffect(() => {

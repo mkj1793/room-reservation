@@ -444,6 +444,7 @@ export const Multiselect = () => {
       required
       multiSelect
       texts={defaultTextsForMultiSelect}
+      id="hds-select-component"
     />
   );
 };
@@ -470,6 +471,7 @@ export const MultiselectWithGroups = () => {
       multiSelect
       icon={<IconLocation />}
       texts={defaultTextsForMultiSelect}
+      id="hds-select-component"
     />
   );
 };
