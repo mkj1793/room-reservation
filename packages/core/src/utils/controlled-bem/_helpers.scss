@@ -114,3 +114,11 @@
 
   @return $string;
 }
+
+@function get-map-value-if-map($assumedMap, $name) {
+  @if not is-value-map($assumedMap) {
+    @return null;
+  }
+
+  @return map.get($assumedMap, $name);
+}

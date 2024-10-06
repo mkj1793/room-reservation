@@ -8,7 +8,7 @@
 
 $HAS_EXPLICIT_TRUE: 'HAS_EXPLICIT_TRUE';
 $ALL_ALLOWED: 'ALL_ALLOWED';
-$IS_EXPLICITlY_DISALLOWED: 'IS_EXPLICITlY_DISALLOWED';
+$ALL_DISALLOWED: 'ALL_DISALLOWED';
 $ALLOW_BASE_CONTENT: 'ALLOW_BASE_CONTENT';
 $BASE_CONTENT_NAME: 'base';
 $ALIAS_MAP_KEY: 'alias';
@@ -116,5 +116,9 @@ $GLOBAL_BEM_OBJECT: null;
 }
 
 @function get-element-delimeter($config: null) {
+  @return get-config-value('elementDelimeter', $config);
+}
+
+@function get-alias($config: null) {
   @return get-config-value('elementDelimeter', $config);
 }

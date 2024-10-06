@@ -45,3 +45,27 @@
 
   @return $selector;
 }
+
+@function create-selector-with-override($initial, $type, $override) {
+  $selector: '';
+  $prefix: '';
+
+  @if $type == 'custom' {
+    @error "Custom entities cannot have an override";
+    @return $selector;
+  }
+
+  @if $type == 'block' {
+    $prefix: '.';
+  }
+
+  @if $type == 'modifier' {
+    $prefix: '.';
+  }
+
+  @if $type == 'element' {
+    $prefix: ' .';
+  }
+
+  @return '#{$selector}#{$prefix}#{$override}';
+}

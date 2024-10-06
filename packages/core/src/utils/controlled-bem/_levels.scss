@@ -69,8 +69,6 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
     $level: set-level-emit-target-to-parent-selector($level);
   }
 
-  /// @debug 'isRoot: #{$isRoot}';
-
   $level: map.set($level, 'isAllowed', $isAllowed);
   $level: map.set($level, 'contentOnly', $contentOnly);
 
@@ -119,6 +117,12 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
 
   @if not $shouldEmitAtRoot {
     $initial: '&';
+  }
+
+  $alias: get-level-alias($level, $config);
+
+  @if $alias {
+    /// return selectors.create-selector-with-override($initial, $type, $override);
   }
 
   @return selectors.create-selector($initial, $type, $name, $config);
@@ -189,7 +193,7 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
     $closestModifier: get-closest($level, 'modifier');
 
     @if $closestModifier {
-      @return rules.is-modifier-element-allowed($ruleMap, get-level-name($closestModifier), $name);
+      @return rules.is-element-allowed-in-modifier($ruleMap, get-level-name($closestModifier), $name);
     } @else {
       @return rules.is-element-allowed($ruleMap, $name);
     }
@@ -211,7 +215,7 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
     } @else if not $name {
       @return true;
     } @else if is-modifier-type($closestType) {
-      @return rules.is-modifier-element-allowed($ruleMap, get-level-name($closestEntity), $name);
+      @return rules.is-element-allowed-in-modifier($ruleMap, get-level-name($closestEntity), $name);
     } @else if is-element-type($closestType) {
       @return rules.is-element-allowed($ruleMap, get-level-name($closestEntity));
     }
@@ -263,7 +267,23 @@ $EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN: 'EMIT_TARGET_ROOT_WITH_NESTED_CHILDREN';
     $type: get-level-type($level);
     $name: get-level-name($level);
 
-    @return rules.get-selector-override-value($ruleMap, $type, $name);
+    @return null;
+  }
+
+  @return null;
+}
+
+@function get-level-alias($level, $config: null) {
+  $ruleMap: globals.get-global-bem-rules();
+  $type: get-level-type($level);
+  $name: get-level-name($level);
+
+  @if is-element-level($level) {
+    @return null;
+  } @else if is-modifier-level($level) {
+    @return null;
+  } @else if is-block-level($level) {
+    @return globals.get-block-name($config);
   }
 
   @return null;
