@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout code hds
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Read .nvmrc
         run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_OUTPUT
@@ -100,7 +100,7 @@ jobs:
 
       # Publish to hds-demo
       - name: Checkout code hds-demo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: City-of-Helsinki/hds-demo
           path: hds-demo
